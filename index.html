@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Felis Regia — Playable 3D Fantasy Cat Chess with Marble vs. Obsidian sculpted pieces, 7 interactive 3D worlds, and procedural feline audio.">
+    <meta name="theme-color" content="#0e0f14">
+    <title>Felis Regia — 3D Fantasy Cat Chess</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <!-- Google Fonts & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" />
+    <!-- Three.js r128 & Chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"><\/script>
+
+    <style>
+        :root {
+            --md-surface: rgba(24, 25, 32, 0.78);
+            --md-surface-bright: rgba(42, 44, 56, 0.85);
+            --md-primary: #d0bcff;
+            --md-on-primary: #381e72;
+            --md-secondary-container: rgba(74, 68, 88, 0.75);
+            --md-outline: rgba(147, 143, 153, 0.35);
+        }
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0e0f14;
+            color: #e6e1e5;
+        }
+
+        .font-display {
+            font-family: 'Cinzel', serif;
+        }
+
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Material 3 Elevated Glass Surfaces */
+        .m3-surface {
+            background: var(--md-surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--md-outline);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+        }
+
+        .m3-chip {
+            background: rgba(35, 36, 46, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        .m3-chip:hover {
+            background: rgba(65, 62, 82, 0.85);
+            transform: translateY(-1px);
+        }
+
+        .m3-chip.active {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(208, 188, 255, 0.35);
+        }
+
+        .m3-btn {
+            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .m3-btn:active {
+            transform: scale(0.95);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(248, 113, 113, 0.4); }
+            50% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.85); }
+        }
+        .check-alert {
+            animation: pulseGlow 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="fixed inset-0 pointer-events-none z-10 flex flex-col justify-between p-3 sm:p-5">
+
+        <!-- TOP BAR -->
+        <header class="w-full flex flex-col lg:flex-row items-center justify-between gap-3 pointer-events-auto">
+            <div class="m3-surface rounded-full px-4 py-2 flex items-center gap-3 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center shadow-md">
+                        <span class="material-symbols-rounded text-white text-xl">pets</span>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-sm sm:text-base font-bold tracking-wider text-purple-100 leading-none">FELIS REGIA</h1>
+                        <p id="scene-subtitle" class="text-[11px] text-purple-300/80 font-medium tracking-wide">Enchanted Forest</p>
+                    </div>
+                </div>
+
+                <div class="h-6 w-[1px] bg-white/15 hidden sm:block"></div>
+
+                <div id="turn-badge" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15">
+                    <span id="turn-dot" class="w-3 h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]"></span>
+                    <span id="turn-text" class="text-xs sm:text-sm font-semibold tracking-wide text-stone-100">Marble Cats' Turn</span>
+                </div>
+
+                <div id="status-alert" class="hidden items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/25 border border-red-400/50 text-red-200 text-xs font-bold check-alert">
+                    <span class="material-symbols-rounded text-sm">warning</span>
+                    <span id="status-alert-text">CHECK!</span>
+                </div>
+            </div>
+
+            <nav aria-label="Scenery Themes" class="m3-surface rounded-full p-1.5 flex items-center gap-1.5 max-w-full overflow-x-auto no-scrollbar">
+                <button onclick="setSceneryTheme('forest')" data-theme="forest" class="theme-chip m3-chip active flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">forest</span>
+                    <span>Forest</span>
+                </button>
+                <button onclick="setSceneryTheme('cathouse')" data-theme="cathouse" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">cottage</span>
+                    <span>Cat House</span>
+                </button>
+                <button onclick="setSceneryTheme('meadows')" data-theme="meadows" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">local_florist</span>
+                    <span>Meadows</span>
+                </button>
+                <button onclick="setSceneryTheme('alley')" data-theme="alley" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">location_city</span>
+                    <span>City Alley</span>
+                </button>
+                <button onclick="setSceneryTheme('paradise')" data-theme="paradise" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">cloud</span>
+                    <span>Cat Paradise</span>
+                </button>
+                <button onclick="setSceneryTheme('starlight')" data-theme="starlight" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">nights_stay</span>
+                    <span>Starlight Roof</span>
+                </button>
+                <button onclick="setSceneryTheme('temple')" data-theme="temple" class="theme-chip m3-chip flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap">
+                    <span class="material-symbols-rounded text-base">account_balance</span>
+                    <span>Ancient Temple</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- MIDDLE FLOATING TRAYS -->
+        <div class="flex justify-between items-end sm:items-center my-auto pointer-events-none gap-2">
+            <div id="captures-window" class="m3-surface rounded-2xl p-2.5 flex flex-col gap-2 pointer-events-auto max-w-[175px] sm:max-w-[220px] transition-all duration-300">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
+                        <span class="material-symbols-rounded text-sm">swords</span>
+                        <span>Captures</span>
+                    </span>
+                    <button onclick="toggleTray('captures')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300" title="Minimize / Expand Captures">
+                        <span id="captures-toggle-icon" class="material-symbols-rounded text-sm">remove</span>
+                    </button>
+                </div>
+
+                <div id="captures-body" class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-stone-300 font-semibold border-b border-white/10 pb-1">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-stone-100"></span>Marble</span>
+                        <span id="white-adv" class="text-purple-300 font-bold"></span>
+                    </div>
+                    <div id="captured-by-white" class="flex flex-wrap gap-1 min-h-[22px] text-sm leading-none"></div>
+
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-stone-400 font-semibold border-b border-white/10 pb-1 pt-1">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-950 border border-purple-400"></span>Obsidian</span>
+                        <span id="black-adv" class="text-purple-300 font-bold"></span>
+                    </div>
+                    <div id="captured-by-black" class="flex flex-wrap gap-1 min-h-[22px] text-sm leading-none"></div>
+                </div>
+            </div>
+
+            <div id="chronicle-window" class="m3-surface rounded-2xl p-2.5 sm:p-3 flex flex-col gap-1.5 pointer-events-auto w-40 sm:w-52 transition-all duration-300">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-purple-300 font-bold">
+                        <span class="material-symbols-rounded text-sm">history_edu</span>
+                        <span>Chronicle</span>
+                        <span id="move-counter" class="text-[10px] text-stone-400 font-normal ml-0.5">(1)</span>
+                    </div>
+                    <button onclick="toggleTray('chronicle')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300" title="Minimize / Expand Chronicle">
+                        <span id="chronicle-toggle-icon" class="material-symbols-rounded text-sm">remove</span>
+                    </button>
+                </div>
+                <div id="chronicle-body">
+                    <div id="move-history" class="text-xs text-stone-300 max-h-28 overflow-y-auto space-y-1 pr-1 font-mono">
+                        <div class="text-stone-400 italic">Click any Marble cat to begin...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM DOCK -->
+        <footer class="w-full flex flex-col sm:flex-row items-center justify-center gap-2.5 pointer-events-auto">
+            <div class="m3-surface rounded-full p-1.5 px-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                <button id="btn-mode" onclick="toggleGameMode()" class="m3-btn flex items-center gap-2 px-4 py-2 rounded-full bg-purple-300 text-purple-950 font-semibold text-xs sm:text-sm shadow-sm">
+                    <span id="mode-icon" class="material-symbols-rounded text-lg">smart_toy</span>
+                    <span id="mode-label">vs AI Cat Master</span>
+                </button>
+
+                <button id="btn-difficulty" onclick="cycleDifficulty()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
+                    <span class="material-symbols-rounded text-base text-amber-300">psychology</span>
+                    <span id="diff-label">AI: Clever</span>
+                </button>
+
+                <div class="h-5 w-[1px] bg-white/15 mx-0.5 hidden sm:block"></div>
+
+                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium" title="Switch Camera View">
+                    <span class="material-symbols-rounded text-lg">videocam</span>
+                    <span id="cam-label" class="hidden sm:inline">Orbit View</span>
+                </button>
+
+                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium" title="Undo Move">
+                    <span class="material-symbols-rounded text-lg">undo</span>
+                    <span class="hidden sm:inline">Undo</span>
+                </button>
+
+                <button id="btn-sound" onclick="toggleSound()" class="m3-btn flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200" title="Toggle Sound">
+                    <span id="sound-icon" class="material-symbols-rounded text-lg">volume_up</span>
+                </button>
+
+                <button onclick="resetGame()" class="m3-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-rose-500/25 hover:bg-rose-500/35 border border-rose-400/30 text-rose-200 text-xs sm:text-sm font-semibold">
+                    <span class="material-symbols-rounded text-lg">restart_alt</span>
+                    <span>New Match</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- PAWN PROMOTION MODAL -->
+    <div id="promotion-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-black/65 backdrop-blur-md p-4">
+        <div class="m3-surface rounded-3xl p-6 max-w-md w-full text-center border border-purple-400/30 shadow-2xl">
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center mx-auto mb-3">
+                <span class="material-symbols-rounded text-purple-300 text-2xl">workspace_premium</span>
+            </div>
+            <h2 class="font-display text-xl font-bold text-white mb-1">Kitten Ascension</h2>
+            <p class="text-xs text-stone-300 mb-5">Your brave Kitten Pawn reached the 8th rank! Choose its royal evolution:</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <button onclick="confirmPromotion('q')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
+                    <span class="text-2xl">👑</span>
+                    <span class="text-xs font-bold text-white">Empress Queen</span>
+                </button>
+                <button onclick="confirmPromotion('r')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
+                    <span class="text-2xl">🏰</span>
+                    <span class="text-xs font-bold text-white">Tower Guardian</span>
+                </button>
+                <button onclick="confirmPromotion('b')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
+                    <span class="text-2xl">🔮</span>
+                    <span class="text-xs font-bold text-white">Mystic Mage</span>
+                </button>
+                <button onclick="confirmPromotion('n')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
+                    <span class="text-2xl">⚡</span>
+                    <span class="text-xs font-bold text-white">Lynx Pouncer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VICTORY MODAL -->
+    <div id="gameover-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 pointer-events-auto">
+        <div class="m3-surface rounded-3xl p-7 max-w-md w-full text-center border border-purple-300/30 shadow-2xl">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-purple-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span class="material-symbols-rounded text-white text-4xl">emoji_events</span>
+            </div>
+            <h2 id="gameover-title" class="font-display text-2xl font-extrabold text-white mb-2">Checkmate!</h2>
+            <p id="gameover-desc" class="text-sm text-stone-300 mb-6">The Marble Dynasty claims the throne.</p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="closeGameOverModal()" class="m3-btn px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-stone-200">
+                    Inspect Board
+                </button>
+                <button onclick="resetGame()" class="m3-btn px-6 py-2.5 rounded-full bg-purple-300 hover:bg-purple-200 text-purple-950 text-xs font-bold shadow-lg">
+                    Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CatSoundEngine {
+            constructor() {
+                this.enabled = true;
+                this.ctx = null;
+                this.noiseBuffer = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                        this.createNoiseBuffer();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            createNoiseBuffer() {
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 1.5;
+                this.noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = this.noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            }
+            playPieceVoice(type = 'p', color = 'w') {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const isWhite = color === 'w';
+                const matShift = isWhite ? 1.08 : 0.90;
+                if (type === 'p') {
+                    this.synthMeow({ fStart: 740 * matShift, fPeak: 1180 * matShift, fEnd: 620 * matShift, duration: 0.24, vibratoRate: 12, vibratoDepth: 18, gainLevel: 0.16, isWhite });
+                } else if (type === 'n' || type === 'b') {
+                    this.synthPurrRumble(now, 0.22, isWhite ? 32 : 25, 0.08);
+                    this.synthMeow({ fStart: 420 * matShift, fPeak: 780 * matShift, fEnd: (type === 'n' ? 690 : 540) * matShift, duration: 0.34, vibratoRate: 26, vibratoDepth: 35, gainLevel: 0.18, isWhite, delay: 0.04 });
+                } else if (type === 'r' || type === 'q') {
+                    this.synthPurrRumble(now, 0.38, isWhite ? 28 : 22, 0.11);
+                    this.synthMeow({ fStart: (type === 'q' ? 380 : 290) * matShift, fPeak: (type === 'q' ? 640 : 480) * matShift, fEnd: (type === 'q' ? 340 : 240) * matShift, duration: 0.42, vibratoRate: 8, vibratoDepth: 15, gainLevel: 0.2, isWhite, delay: 0.05 });
+                } else if (type === 'k') {
+                    this.synthPurrRumble(now, 0.52, isWhite ? 24 : 19, 0.16);
+                    this.synthMeow({ fStart: 195 * matShift, fPeak: 310 * matShift, fEnd: 145 * matShift, duration: 0.48, vibratoRate: 16, vibratoDepth: 22, gainLevel: 0.22, isWhite, delay: 0.02 });
+                }
+            }
+            synthMeow({ fStart, fPeak, fEnd, duration, vibratoRate = 10, vibratoDepth = 15, gainLevel = 0.16, isWhite = true, delay = 0 }) {
+                if (!this.ctx) return;
+                const t0 = this.ctx.currentTime + delay;
+                const tPeak = t0 + duration * 0.38;
+                const tEnd = t0 + duration;
+                const osc = this.ctx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(fStart, t0);
+                osc.frequency.exponentialRampToValueAtTime(fPeak, tPeak);
+                osc.frequency.exponentialRampToValueAtTime(Math.max(60, fEnd), tEnd);
+                const lfo = this.ctx.createOscillator();
+                const lfoGain = this.ctx.createGain();
+                lfo.frequency.setValueAtTime(vibratoRate, t0);
+                lfoGain.gain.setValueAtTime(vibratoDepth, t0);
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc.frequency);
+                const formant1 = this.ctx.createBiquadFilter();
+                formant1.type = 'bandpass';
+                formant1.Q.setValueAtTime(4.5, t0);
+                formant1.frequency.setValueAtTime(fStart * 1.4, t0);
+                formant1.frequency.exponentialRampToValueAtTime(fPeak * 2.1, tPeak);
+                formant1.frequency.exponentialRampToValueAtTime(fEnd * 1.3, tEnd);
+                const matOsc = this.ctx.createOscillator();
+                const matGain = this.ctx.createGain();
+                matOsc.type = isWhite ? 'sine' : 'triangle';
+                matOsc.frequency.setValueAtTime(isWhite ? fPeak * 2.0 : fStart * 0.5, t0);
+                matOsc.frequency.exponentialRampToValueAtTime(isWhite ? fEnd * 2.5 : fEnd * 0.5, tEnd);
+                matGain.gain.setValueAtTime(isWhite ? 0.045 : 0.08, t0);
+                matGain.gain.exponentialRampToValueAtTime(0.001, tEnd);
+                const env = this.ctx.createGain();
+                env.gain.setValueAtTime(0.001, t0);
+                env.gain.linearRampToValueAtTime(gainLevel, t0 + duration * 0.18);
+                env.gain.exponentialRampToValueAtTime(0.0008, tEnd);
+                osc.connect(formant1);
+                formant1.connect(env);
+                matOsc.connect(matGain);
+                matGain.connect(env);
+                env.connect(this.ctx.destination);
+                osc.start(t0); lfo.start(t0); matOsc.start(t0);
+                osc.stop(tEnd + 0.02); lfo.stop(tEnd + 0.02); matOsc.stop(tEnd + 0.02);
+            }
+            synthPurrRumble(startTime, duration, rateHz = 26, volume = 0.1) {
+                if (!this.ctx) return;
+                const carrier = this.ctx.createOscillator();
+                const mod = this.ctx.createOscillator();
+                const modGain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                const env = this.ctx.createGain();
+                carrier.type = 'sawtooth';
+                carrier.frequency.setValueAtTime(58, startTime);
+                mod.type = 'sine';
+                mod.frequency.setValueAtTime(rateHz, startTime);
+                modGain.gain.setValueAtTime(32, startTime);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(210, startTime);
+                env.gain.setValueAtTime(0.001, startTime);
+                env.gain.linearRampToValueAtTime(volume, startTime + duration * 0.25);
+                env.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                mod.connect(modGain);
+                modGain.connect(carrier.frequency);
+                carrier.connect(filter);
+                filter.connect(env);
+                env.connect(this.ctx.destination);
+                carrier.start(startTime); mod.start(startTime);
+                carrier.stop(startTime + duration + 0.02); mod.stop(startTime + duration + 0.02);
+            }
+            synthHiss(startTime, duration = 0.25, volume = 0.14) {
+                if (!this.ctx || !this.noiseBuffer) return;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = this.noiseBuffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(3200, startTime);
+                filter.frequency.exponentialRampToValueAtTime(1800, startTime + duration);
+                filter.Q.setValueAtTime(2.2, startTime);
+                const env = this.ctx.createGain();
+                env.gain.setValueAtTime(0.001, startTime);
+                env.gain.linearRampToValueAtTime(volume, startTime + 0.03);
+                env.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                noise.connect(filter); filter.connect(env); env.connect(this.ctx.destination);
+                noise.start(startTime); noise.stop(startTime + duration + 0.02);
+            }
+            playSelect() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(560, now);
+                osc.frequency.exponentialRampToValueAtTime(840, now + 0.08);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(now); osc.stop(now + 0.11);
+            }
+            playMove(type = 'p', color = 'w', durationSec = 0.38) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const isWhite = color === 'w';
+                const pitchMap = { p: 780, n: 620, b: 580, r: 420, q: 520, k: 310 };
+                const baseF = (pitchMap[type] || 550) * (isWhite ? 1.06 : 0.92);
+                this.synthMeow({ fStart: baseF * 0.85, fPeak: baseF * 1.25, fEnd: baseF * 1.05, duration: 0.16, vibratoRate: 30, vibratoDepth: 25, gainLevel: 0.11, isWhite, delay: 0 });
+                this.playStoneClack(durationSec * 0.92, isWhite);
+            }
+            playStoneClack(delaySec = 0, isWhite = true) {
+                if (!this.enabled || !this.ctx) return;
+                const t = this.ctx.currentTime + delaySec;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(isWhite ? 240 : 175, t);
+                osc.frequency.exponentialRampToValueAtTime(isWhite ? 75 : 52, t + 0.085);
+                gain.gain.setValueAtTime(0.26, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(t); osc.stop(t + 0.1);
+            }
+            playPounceLaunch(attackerType = 'n', attackerColor = 'w') {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const isWhite = attackerColor === 'w';
+                const matShift = isWhite ? 1.05 : 0.9;
+                this.synthHiss(now, 0.24, 0.15);
+                this.synthPurrRumble(now, 0.28, 36, 0.14);
+                this.synthMeow({ fStart: 380 * matShift, fPeak: 920 * matShift, fEnd: 290 * matShift, duration: 0.32, vibratoRate: 34, vibratoDepth: 48, gainLevel: 0.2, isWhite, delay: 0.02 });
+            }
+            playShatter(capturedColor = 'b') {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const isWhiteVictim = capturedColor === 'w';
+                this.playStoneClack(0, isWhiteVictim);
+                const freqs = isWhiteVictim ? [420, 680, 1040, 1480, 2120, 2760] : [260, 440, 720, 1080, 1540, 1980];
+                freqs.forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+                    const startT = now + idx * 0.016;
+                    osc.frequency.setValueAtTime(f, startT);
+                    osc.frequency.exponentialRampToValueAtTime(f * 0.42, startT + 0.36);
+                    gain.gain.setValueAtTime(0.11, startT);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startT + 0.38);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(startT); osc.stop(startT + 0.4);
+                });
+                this.synthMeow({ fStart: isWhiteVictim ? 960 : 780, fPeak: isWhiteVictim ? 1120 : 890, fEnd: isWhiteVictim ? 340 : 260, duration: 0.36, vibratoRate: 22, vibratoDepth: 32, gainLevel: 0.17, isWhite: isWhiteVictim, delay: 0.04 });
+            }
+            playCheck() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                this.synthHiss(now, 0.3, 0.14);
+                this.synthMeow({ fStart: 480, fPeak: 880, fEnd: 410, duration: 0.42, vibratoRate: 28, vibratoDepth: 40, gainLevel: 0.19, isWhite: true, delay: 0.03 });
+            }
+            playVictory() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                this.synthPurrRumble(now, 1.25, 25, 0.15);
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                    this.synthMeow({ fStart: freq * 0.85, fPeak: freq * 1.12, fEnd: freq, duration: 0.45, vibratoRate: 12, vibratoDepth: 14, gainLevel: 0.14, isWhite: idx % 2 === 0, delay: idx * 0.14 });
+                });
+            }
+            playPromotion(color = 'w') {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const isWhite = color === 'w';
+                this.synthPurrRumble(now, 0.7, 28, 0.12);
+                this.synthMeow({ fStart: 440, fPeak: 880, fEnd: 659.25, duration: 0.46, vibratoRate: 10, vibratoDepth: 16, gainLevel: 0.2, isWhite, delay: 0.18 });
+            }
+        }
+        const sfx = new CatSoundEngine();
+
+        function createMarbleTexture(isWhite) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = isWhite ? '#f5f2eb' : '#14121d';
+            ctx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 28; i++) {
+                ctx.beginPath();
+                let x = Math.random() * 256, y = Math.random() * 256;
+                ctx.moveTo(x, y);
+                for (let s = 0; s < 6; s++) {
+                    x += (Math.random() - 0.5) * 70;
+                    y += (Math.random() - 0.5) * 70;
+                    ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = isWhite ? `rgba(180, 168, 152, ${0.12 + Math.random() * 0.18})` : `rgba(139, 92, 246, ${0.12 + Math.random() * 0.22})`;
+                ctx.lineWidth = 1 + Math.random() * 2.5;
+                ctx.stroke();
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        let scene, camera, renderer, raycaster, mouse;
+        let boardGroup, piecesGroup, highlightsGroup, environmentGroup, particlesGroup;
+        const squareSize = 2.1;
+        const boardOffset = (7 * squareSize) / 2;
+
+        const game = new Chess();
+        let selectedSquare = null, legalMovesForSelected = [], pendingPromotionMove = null;
+        let isAnimating = false, customGameOver = null, customMoveHistory = [], stateUndoStack = [], customEnPassantTarget = null;
+        let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+        let vsAI = true, aiDifficulty = 2, currentTheme = 'forest';
+
+        const pieceMeshes = {}, activeAnimations = [], shatterParticles = [], envAnimatedProps = [];
+        const camState = { theta: 0, phi: 0.92, radius: 22.5, targetTheta: 0, targetPhi: 0.92, targetRadius: 22.5, isDragging: false, dragMoved: false, prevX: 0, prevY: 0, presetIndex: 0 };
+        let whiteMarbleMat, blackObsidianMat, goldAccentMat, purpleRuneMat, whiteEyeMat, blackEyeMat, pinkNoseMat, lightSquareMat, darkSquareMat, boardFrameMat;
+        let ambientLight, mainDirLight, rimLight1, rimLight2;
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0f1916, 0.015);
+            camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
+            updateCameraTransform(true);
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.15;
+            container.appendChild(renderer.domElement);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            boardGroup = new THREE.Group(); piecesGroup = new THREE.Group(); highlightsGroup = new THREE.Group(); environmentGroup = new THREE.Group(); particlesGroup = new THREE.Group();
+            scene.add(boardGroup, piecesGroup, highlightsGroup, environmentGroup, particlesGroup);
+
+            initMaterials(); initLights(); buildChessboard(); buildEnvironment(currentTheme); syncBoardPieces(); setupInteractionListeners();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function initMaterials() {
+            whiteMarbleMat = new THREE.MeshStandardMaterial({ color: 0xfbf9f5, map: createMarbleTexture(true), roughness: 0.18, metalness: 0.08 });
+            blackObsidianMat = new THREE.MeshStandardMaterial({ color: 0x1a1626, map: createMarbleTexture(false), roughness: 0.14, metalness: 0.45 });
+            goldAccentMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.25, metalness: 0.85, emissive: 0x451a03, emissiveIntensity: 0.25 });
+            purpleRuneMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, roughness: 0.2, metalness: 0.6, emissive: 0x7e22ce, emissiveIntensity: 0.6 });
+            whiteEyeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            blackEyeMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+            pinkNoseMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.4 });
+        }
+
+        function initLights() {
+            ambientLight = new THREE.AmbientLight(0xdbeafe, 0.65);
+            scene.add(ambientLight);
+            mainDirLight = new THREE.DirectionalLight(0xfffbeb, 1.35);
+            mainDirLight.position.set(14, 26, 16);
+            mainDirLight.castShadow = true;
+            mainDirLight.shadow.mapSize.width = 2048; mainDirLight.shadow.mapSize.height = 2048;
+            const d = 14;
+            mainDirLight.shadow.camera.left = -d; mainDirLight.shadow.camera.right = d; mainDirLight.shadow.camera.top = d; mainDirLight.shadow.camera.bottom = -d;
+            scene.add(mainDirLight);
+            rimLight1 = new THREE.PointLight(0xa855f7, 1.1, 45); rimLight1.position.set(-16, 10, -14); scene.add(rimLight1);
+            rimLight2 = new THREE.PointLight(0x38bdf8, 0.9, 45); rimLight2.position.set(16, 8, -12); scene.add(rimLight2);
+        }
+
+        function buildChessboard() {
+            lightSquareMat = new THREE.MeshStandardMaterial({ color: 0xe7e2d8, roughness: 0.25, metalness: 0.1 });
+            darkSquareMat = new THREE.MeshStandardMaterial({ color: 0x3b334a, roughness: 0.3, metalness: 0.2 });
+            boardFrameMat = new THREE.MeshStandardMaterial({ color: 0x231f2e, roughness: 0.4, metalness: 0.35 });
+            const outerWidth = squareSize * 8 + 1.8;
+            const frameMesh = new THREE.Mesh(new THREE.BoxGeometry(outerWidth, 0.9, outerWidth), boardFrameMat);
+            frameMesh.position.y = -0.5; frameMesh.receiveShadow = true; boardGroup.add(frameMesh);
+            const trimMesh = new THREE.Mesh(new THREE.BoxGeometry(squareSize * 8 + 0.4, 0.96, squareSize * 8 + 0.4), goldAccentMat);
+            trimMesh.position.y = -0.49; boardGroup.add(trimMesh);
+
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const sqGeo = new THREE.BoxGeometry(squareSize * 0.98, 0.25, squareSize * 0.98);
+            for (let r = 0; r < 8; r++) {
+                for (let f = 0; f < 8; f++) {
+                    const isLight = (r + f) % 2 === 1;
+                    const sqName = files[f] + (r + 1);
+                    const sqMesh = new THREE.Mesh(sqGeo, isLight ? lightSquareMat : darkSquareMat);
+                    const pos = squareToWorld(sqName);
+                    sqMesh.position.set(pos.x, -0.05, pos.z);
+                    sqMesh.receiveShadow = true;
+                    sqMesh.userData = { square: sqName, isLight };
+                    boardGroup.add(sqMesh);
+                }
+            }
+        }
+
+        function squareToWorld(sq) {
+            const fileIndex = sq.charCodeAt(0) - 97;
+            const rankIndex = parseInt(sq[1], 10) - 1;
+            return new THREE.Vector3(fileIndex * squareSize - boardOffset, 0.08, (7 - rankIndex) * squareSize - boardOffset);
+        }
+
+        function createCatPieceMesh(type, color) {
+            const isWhite = color === 'w';
+            const bodyMat = isWhite ? whiteMarbleMat : blackObsidianMat;
+            const accentMat = isWhite ? goldAccentMat : purpleRuneMat;
+            const eyeMat = isWhite ? whiteEyeMat : blackEyeMat;
+            const root = new THREE.Group();
+            const baseGroup = new THREE.Group();
+            const baseLower = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.84, 0.22, 24), bodyMat);
+            baseLower.position.y = 0.11; baseLower.castShadow = true; baseGroup.add(baseLower);
+            const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.73, 0.045, 12, 28), accentMat);
+            baseRing.rotation.x = Math.PI / 2; baseRing.position.y = 0.22; baseGroup.add(baseRing);
+            const baseUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.74, 0.16, 24), bodyMat);
+            baseUpper.position.y = 0.3; baseGroup.add(baseUpper);
+            root.add(baseGroup);
+
+            const bodyGroup = new THREE.Group(); bodyGroup.position.y = 0.38; root.add(bodyGroup);
+            const scaleMap = { p: 0.78, n: 0.92, b: 0.96, r: 0.95, q: 1.08, k: 1.16 };
+            const roleScale = scaleMap[type] || 1.0;
+
+            const torsoGeo = new THREE.SphereGeometry(0.52, 20, 20);
+            torsoGeo.scale(0.88, 1.32 * roleScale, 0.88);
+            const torso = new THREE.Mesh(torsoGeo, bodyMat);
+            torso.position.y = 0.58 * roleScale; torso.castShadow = true; bodyGroup.add(torso);
+
+            const headGroup = new THREE.Group();
+            headGroup.position.set(0, 1.32 * roleScale, 0.12);
+            bodyGroup.add(headGroup);
+            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.41, 20, 20), bodyMat);
+            skull.scale.set(1.04, 0.94, 0.98); skull.castShadow = true; headGroup.add(skull);
+
+            [-0.15, 0.15].forEach(ex => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.068, 12, 12), eyeMat);
+                eye.scale.set(1.1, 0.85, 0.6); eye.position.set(ex, 0.08, 0.35); headGroup.add(eye);
+            });
+            [-0.24, 0.24].forEach((ex, idx) => {
+                const ear = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 4), bodyMat);
+                ear.position.set(ex, 0.38, 0.02); ear.rotation.z = idx === 0 ? 0.26 : -0.26; headGroup.add(ear);
+            });
+
+            const tailGroup = new THREE.Group(); tailGroup.position.set(0, 0.22, -0.36); bodyGroup.add(tailGroup);
+            for (let t = 0; t < 5; t++) {
+                const seg = new THREE.Mesh(new THREE.SphereGeometry(0.095 - t * 0.01, 10, 10), bodyMat);
+                seg.scale.set(1, 1.6, 1); seg.position.set(0, t * 0.16, -t * 0.08); tailGroup.add(seg);
+            }
+
+            if (type === 'p') {
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 10, 20), accentMat);
+                collar.rotation.x = Math.PI / 2; collar.position.set(0, 1.02 * roleScale, 0.12); bodyGroup.add(collar);
+            } else if (type === 'r') {
+                const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.24, 16), accentMat);
+                turret.position.set(0, 0.42, 0); headGroup.add(turret);
+            } else if (type === 'n') {
+                bodyGroup.rotation.x = -0.18; headGroup.rotation.x = 0.18;
+                const crest = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.06, 8, 16, Math.PI), accentMat);
+                crest.rotation.y = Math.PI / 2; crest.position.set(0, 0.3, -0.05); headGroup.add(crest);
+            } else if (type === 'b') {
+                const mitre = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.58, 16), accentMat);
+                mitre.position.set(0, 0.55, 0); headGroup.add(mitre);
+            } else if (type === 'q') {
+                const tiaraRing = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.04, 12, 24), accentMat);
+                tiaraRing.rotation.x = Math.PI / 2; tiaraRing.position.set(0, 0.34, 0); headGroup.add(tiaraRing);
+            } else if (type === 'k') {
+                const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.24, 0.22, 16), accentMat);
+                crownBase.position.set(0, 0.42, 0); headGroup.add(crownBase);
+                const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.28, 0.08), accentMat);
+                crossV.position.set(0, 0.65, 0); headGroup.add(crossV);
+                const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.08), accentMat);
+                crossH.position.set(0, 0.68, 0); headGroup.add(crossH);
+            }
+
+            const baseFacingY = isWhite ? Math.PI : 0;
+            root.rotation.y = baseFacingY;
+            root.userData = { type, color, bodyGroup, headGroup, tailGroup, baseFacingY, animPhase: Math.random() * Math.PI * 2, vocalPulse: 0 };
+            return root;
+        }
+
+        function sqToCoords(sq) { return { f: sq.charCodeAt(0) - 97, r: parseInt(sq[1], 10) - 1 }; }
+        function coordsToSq(f, r) { return (f < 0 || f > 7 || r < 0 || r > 7) ? null : String.fromCharCode(97 + f) + (r + 1); }
+
+        function getCustomCastlingMoves(forSquare, turn) {
+            const moves = [];
+            const homeRank = turn === 'w' ? '1' : '8';
+            const kingSq = 'e' + homeRank, kSideRookSq = 'h' + homeRank, qSideRookSq = 'a' + homeRank;
+            const kingPiece = game.get(kingSq);
+            if (!kingPiece || kingPiece.type !== 'k' || kingPiece.color !== turn) return moves;
+            const canK = turn === 'w' ? castlingRights.wK : castlingRights.bK;
+            const canQ = turn === 'w' ? castlingRights.wQ : castlingRights.bQ;
+
+            const kRook = game.get(kSideRookSq);
+            if (canK && kRook && kRook.type === 'r' && kRook.color === turn && !game.get('f' + homeRank) && !game.get('g' + homeRank)) {
+                if (!forSquare || forSquare === kingSq) {
+                    moves.push({ color: turn, from: kingSq, to: 'g' + homeRank, piece: 'k', flags: 'k', san: 'O-O', isSpecial: 'castle' });
+                    moves.push({ color: turn, from: kingSq, to: kSideRookSq, piece: 'k', flags: 'k', san: 'O-O', isSpecial: 'castle' });
+                }
+                if (!forSquare || forSquare === kSideRookSq) {
+                    moves.push({ color: turn, from: kSideRookSq, to: kingSq, piece: 'r', flags: 'k', san: 'O-O', isSpecial: 'castle' });
+                }
+            }
+            const qRook = game.get(qSideRookSq);
+            if (canQ && qRook && qRook.type === 'r' && qRook.color === turn && !game.get('b' + homeRank) && !game.get('c' + homeRank) && !game.get('d' + homeRank)) {
+                if (!forSquare || forSquare === kingSq) {
+                    moves.push({ color: turn, from: kingSq, to: 'c' + homeRank, piece: 'k', flags: 'q', san: 'O-O-O', isSpecial: 'castle' });
+                    moves.push({ color: turn, from: kingSq, to: qSideRookSq, piece: 'k', flags: 'q', san: 'O-O-O', isSpecial: 'castle' });
+                }
+                if (!forSquare || forSquare === qSideRookSq) {
+                    moves.push({ color: turn, from: qSideRookSq, to: kingSq, piece: 'r', flags: 'q', san: 'O-O-O', isSpecial: 'castle' });
+                }
+            }
+            return moves;
+        }
+
+        function getPseudoLegalMoves(square = null) {
+            const turn = game.turn();
+            const legalMoves = square ? game.moves({ square, verbose: true }) : game.moves({ verbose: true });
+            const moveMap = new Map();
+            legalMoves.forEach(m => moveMap.set(`${m.from}-${m.to}-${m.promotion || ''}`, m));
+            getCustomCastlingMoves(square, turn).forEach(cm => moveMap.set(`${cm.from}-${cm.to}-`, cm));
+
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const squaresToScan = square ? [square] : [];
+            if (!square) {
+                for (let r = 1; r <= 8; r++) for (let f = 0; f < 8; f++) squaresToScan.push(files[f] + r);
+            }
+
+            const activeEpSq = customEnPassantTarget;
+            squaresToScan.forEach(fromSq => {
+                const piece = game.get(fromSq);
+                if (!piece || piece.color !== turn) return;
+                const { f, r } = sqToCoords(fromSq);
+                const addCandidate = (toF, toR) => {
+                    const toSq = coordsToSq(toF, toR);
+                    if (!toSq) return false;
+                    const target = game.get(toSq);
+                    if (target && target.color === turn) return false;
+                    const isPromo = piece.type === 'p' && (toR === 7 || toR === 0);
+                    (isPromo ? ['q', 'r', 'b', 'n'] : [undefined]).forEach(pr => {
+                        const key = `${fromSq}-${toSq}-${pr || ''}`;
+                        if (!moveMap.has(key)) {
+                            moveMap.set(key, { color: turn, from: fromSq, to: toSq, piece: piece.type, captured: target ? target.type : undefined, promotion: pr, flags: (target ? 'c' : 'n') + (pr ? 'p' : ''), san: `${piece.type === 'p' ? (target ? fromSq[0] : '') : piece.type.toUpperCase()}${target ? 'x' : ''}${toSq}` });
+                        }
+                    });
+                    return !target;
+                };
+                if (piece.type === 'p') {
+                    const dir = turn === 'w' ? 1 : -1;
+                    if (!game.get(coordsToSq(f, r + dir))) {
+                        addCandidate(f, r + dir);
+                        if ((r === (turn === 'w' ? 1 : 6)) && !game.get(coordsToSq(f, r + dir * 2))) {
+                            const twoStep = coordsToSq(f, r + dir * 2);
+                            moveMap.set(`${fromSq}-${twoStep}-`, { color: turn, from: fromSq, to: twoStep, piece: 'p', flags: 'b', san: twoStep });
+                        }
+                    }
+                    [-1, 1].forEach(df => {
+                        const capSq = coordsToSq(f + df, r + dir);
+                        if (!capSq) return;
+                        const occ = game.get(capSq);
+                        if (occ && occ.color !== turn) addCandidate(f + df, r + dir);
+                        else if (activeEpSq && capSq === activeEpSq) {
+                            const victimSq = coordsToSq(f + df, r);
+                            moveMap.set(`${fromSq}-${capSq}-`, { color: turn, from: fromSq, to: capSq, piece: 'p', captured: 'p', flags: 'e', epVictimSq: victimSq, san: `${fromSq[0]}x${capSq}` });
+                        }
+                    });
+                } else if (piece.type === 'n') {
+                    [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([df, dr]) => addCandidate(f + df, r + dr));
+                } else if (piece.type === 'k') {
+                    [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([df, dr]) => addCandidate(f + df, r + dr));
+                } else {
+                    const dirs = [];
+                    if (piece.type === 'b' || piece.type === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+                    if (piece.type === 'r' || piece.type === 'q') dirs.push([-1,0],[1,0],[0,-1],[0,1]);
+                    dirs.forEach(([df, dr]) => { for (let s = 1; s < 8; s++) if (!addCandidate(f + df * s, r + dr * s)) break; });
+                }
+            });
+            return Array.from(moveMap.values());
+        }
+
+        function buildCastlingFenString() {
+            let s = '';
+            if (castlingRights.wK) s += 'K';
+            if (castlingRights.wQ) s += 'Q';
+            if (castlingRights.bK) s += 'k';
+            if (castlingRights.bQ) s += 'q';
+            return s || '-';
+        }
+
+        function executeChessMoveAllowingAny(moveInput) {
+            stateUndoStack.push({ fen: game.fen(), customGameOver: customGameOver ? { ...customGameOver } : null, history: customMoveHistory.map(m => ({ ...m })), customEnPassantTarget, castlingRights: { ...castlingRights } });
+            const matched = getPseudoLegalMoves(moveInput.from).find(m => m.to === moveInput.to && (!moveInput.promotion || m.promotion === moveInput.promotion));
+            if (!matched) { stateUndoStack.pop(); return null; }
+            const turn = game.turn();
+
+            if (matched.flags && (matched.flags.includes('k') || matched.flags.includes('q'))) {
+                const homeRank = turn === 'w' ? '1' : '8';
+                const isKingside = matched.flags.includes('k');
+                const kingFrom = 'e' + homeRank, kingTo = (isKingside ? 'g' : 'c') + homeRank;
+                const rookFrom = (isKingside ? 'h' : 'a') + homeRank, rookTo = (isKingside ? 'f' : 'd') + homeRank;
+                game.remove(kingFrom); game.remove(rookFrom);
+                game.put({ type: 'k', color: turn }, kingTo); game.put({ type: 'r', color: turn }, rookTo);
+                if (turn === 'w') { castlingRights.wK = false; castlingRights.wQ = false; } else { castlingRights.bK = false; castlingRights.bQ = false; }
+                customEnPassantTarget = null;
+                const fenTokens = game.fen().split(' ');
+                fenTokens[1] = turn === 'w' ? 'b' : 'w'; fenTokens[2] = buildCastlingFenString(); fenTokens[3] = '-';
+                game.load(fenTokens.join(' '));
+                const norm = { ...matched, from: kingFrom, to: kingTo, piece: 'k', rookFrom, rookTo };
+                customMoveHistory.push(norm);
+                return norm;
+            }
+
+            const movingPiece = game.get(matched.from);
+            const targetPiece = game.get(matched.to);
+            let epVictimSq = matched.epVictimSq || (matched.flags && matched.flags.includes('e') ? matched.to[0] + (movingPiece.color === 'w' ? '5' : '4') : null);
+            game.remove(matched.from);
+            if (epVictimSq) game.remove(epVictimSq);
+            game.remove(matched.to);
+            game.put({ type: matched.promotion || movingPiece.type, color: movingPiece.color }, matched.to);
+
+            const fromRank = parseInt(matched.from[1], 10), toRank = parseInt(matched.to[1], 10);
+            customEnPassantTarget = (movingPiece.type === 'p' && Math.abs(toRank - fromRank) === 2) ? matched.from[0] + ((fromRank + toRank) / 2) : null;
+
+            if (movingPiece.type === 'k') {
+                if (movingPiece.color === 'w') { castlingRights.wK = false; castlingRights.wQ = false; } else { castlingRights.bK = false; castlingRights.bQ = false; }
+            }
+            const fenTokens = game.fen().split(' ');
+            fenTokens[1] = movingPiece.color === 'w' ? 'b' : 'w'; fenTokens[2] = buildCastlingFenString(); fenTokens[3] = '-';
+            game.load(fenTokens.join(' '));
+            if (targetPiece && targetPiece.type === 'k') customGameOver = { winner: movingPiece.color, reason: 'king_captured' };
+            customMoveHistory.push(matched);
+            return matched;
+        }
+
+        function isMatchOver() { return Boolean(customGameOver) || game.game_over(); }
+
+        function triggerCatVocalVisual(pieceMesh) {
+            if (pieceMesh && pieceMesh.userData) pieceMesh.userData.vocalPulse = 1.0;
+        }
+
+        const themeConfigs = {
+            forest: { title: 'Enchanted Moss Forest', bg: 0x0b1914, fogColor: 0x0b1914, fogDensity: 0.016, lightSq: 0xdbe7dc, darkSq: 0x26463b, frame: 0x1a2e26, ambient: 0xa7f3d0, dirColor: 0xfef08a, rim1: 0x34d399, rim2: 0x60a5fa },
+            cathouse: { title: 'Cozy Sunlit Cat Lounge', bg: 0x231712, fogColor: 0x231712, fogDensity: 0.012, lightSq: 0xf5e6d3, darkSq: 0x6b442a, frame: 0x3e2414, ambient: 0xfed7aa, dirColor: 0xffedd5, rim1: 0xf97316, rim2: 0xfacc15 },
+            meadows: { title: 'Golden Breeze Meadows', bg: 0x1a2e35, fogColor: 0x1a2e35, fogDensity: 0.011, lightSq: 0xfef9c3, darkSq: 0x3f6212, frame: 0x294112, ambient: 0xfef08a, dirColor: 0xffffff, rim1: 0x4ade80, rim2: 0x38bdf8 },
+            alley: { title: 'Neon Cyberpunk Cat Alley', bg: 0x090a14, fogColor: 0x090a14, fogDensity: 0.018, lightSq: 0xcbd5e1, darkSq: 0x1e1b4b, frame: 0x0f172a, ambient: 0xc084fc, dirColor: 0xe0e7ff, rim1: 0xf43f5e, rim2: 0x06b6d4 },
+            paradise: { title: 'Celestial Cloud Cat Paradise', bg: 0x1e1633, fogColor: 0x1e1633, fogDensity: 0.012, lightSq: 0xfdf2f8, darkSq: 0x701a75, frame: 0x4a044e, ambient: 0xfbcfe8, dirColor: 0xfff1f2, rim1: 0xf472b6, rim2: 0xa855f7 },
+            starlight: { title: 'Midnight Starlight Rooftop', bg: 0x060814, fogColor: 0x060814, fogDensity: 0.014, lightSq: 0xe2e8f0, darkSq: 0x1e293b, frame: 0x0f172a, ambient: 0x93c5fd, dirColor: 0xe0f2fe, rim1: 0x818cf8, rim2: 0x38bdf8 },
+            temple: { title: 'Ancient Bastet Sun Temple', bg: 0x24190e, fogColor: 0x24190e, fogDensity: 0.015, lightSq: 0xfef3c7, darkSq: 0x78350f, frame: 0x451a03, ambient: 0xfde68a, dirColor: 0xfef08a, rim1: 0xf59e0b, rim2: 0xef4444 }
+        };
+
+        function setSceneryTheme(themeKey) {
+            if (!themeConfigs[themeKey]) return;
+            currentTheme = themeKey;
+            const cfg = themeConfigs[themeKey];
+            document.getElementById('scene-subtitle').textContent = cfg.title;
+            document.querySelectorAll('.theme-chip').forEach(btn => btn.classList.toggle('active', btn.dataset.theme === themeKey));
+            scene.background = new THREE.Color(cfg.bg);
+            scene.fog.color.setHex(cfg.fogColor); scene.fog.density = cfg.fogDensity;
+            lightSquareMat.color.setHex(cfg.lightSq); darkSquareMat.color.setHex(cfg.darkSq); boardFrameMat.color.setHex(cfg.frame);
+            ambientLight.color.setHex(cfg.ambient); mainDirLight.color.setHex(cfg.dirColor); rimLight1.color.setHex(cfg.rim1); rimLight2.color.setHex(cfg.rim2);
+            buildEnvironment(themeKey);
+            sfx.playSelect();
+        }
+
+        function buildEnvironment(themeKey) {
+            while (environmentGroup.children.length > 0) environmentGroup.remove(environmentGroup.children[0]);
+            envAnimatedProps.length = 0;
+            const cfg = themeConfigs[themeKey];
+            scene.background = new THREE.Color(cfg.bg);
+            const floor = new THREE.Mesh(new THREE.CylinderGeometry(36, 40, 2, 48), new THREE.MeshStandardMaterial({ color: cfg.frame, roughness: 0.85 }));
+            floor.position.y = -1.95; floor.receiveShadow = true; environmentGroup.add(floor);
+        }
+
+        function syncBoardPieces() {
+            while (piecesGroup.children.length > 0) piecesGroup.remove(piecesGroup.children[0]);
+            for (const k in pieceMeshes) delete pieceMeshes[k];
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const boardState = game.board();
+            for (let r = 0; r < 8; r++) {
+                for (let f = 0; f < 8; f++) {
+                    const cell = boardState[r][f];
+                    if (cell) {
+                        const sq = files[f] + (8 - r);
+                        const mesh = createCatPieceMesh(cell.type, cell.color);
+                        mesh.position.copy(squareToWorld(sq));
+                        mesh.userData.square = sq;
+                        piecesGroup.add(mesh);
+                        pieceMeshes[sq] = mesh;
+                    }
+                }
+            }
+            updateHUD();
+        }
+
+        function triggerShatterExplosion(worldPos, capturedColor) {
+            const isWhite = capturedColor === 'w';
+            const shardMat = isWhite ? whiteMarbleMat : blackObsidianMat;
+            const shardGeo = new THREE.DodecahedronGeometry(0.18, 0);
+            for (let i = 0; i < 24; i++) {
+                const mesh = new THREE.Mesh(shardGeo, shardMat);
+                mesh.position.set(worldPos.x, worldPos.y + 0.5, worldPos.z);
+                particlesGroup.add(mesh);
+                shatterParticles.push({ mesh, vel: new THREE.Vector3((Math.random() - 0.5) * 7, 3 + Math.random() * 5, (Math.random() - 0.5) * 7), rotVel: new THREE.Vector3(4, 4, 4), life: 1.0 });
+            }
+        }
+
+        function animateChessMove(moveObj, onComplete) {
+            isAnimating = true;
+            while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
+            const fromSq = moveObj.from, toSq = moveObj.to;
+            const attackerMesh = pieceMeshes[fromSq];
+            let defenderMesh = pieceMeshes[toSq];
+            const startPos = squareToWorld(fromSq), endPos = squareToWorld(toSq);
+            const isCapture = Boolean(defenderMesh || moveObj.captured);
+            if (isCapture) sfx.playPounceLaunch(moveObj.piece, moveObj.color);
+            else sfx.playMove(moveObj.piece, moveObj.color, 0.38);
+
+            delete pieceMeshes[fromSq];
+            if (attackerMesh) { pieceMeshes[toSq] = attackerMesh; attackerMesh.userData.square = toSq; }
+
+            activeAnimations.push({
+                mesh: attackerMesh, defenderMesh, startPos, endPos, isCapture,
+                capturedColor: moveObj.color === 'w' ? 'b' : 'w', shattered: false,
+                arcHeight: isCapture ? 2.5 : 1.3, duration: isCapture ? 0.5 : 0.36, elapsed: 0,
+                onComplete: () => { isAnimating = false; if (onComplete) onComplete(); }
+            });
+        }
+
+        function showLegalMoveHighlights(square, moves) {
+            while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
+            moves.forEach(m => {
+                const pos = squareToWorld(m.to);
+                const isCastle = m.flags && (m.flags.includes('k') || m.flags.includes('q'));
+                const isCapture = !isCastle && m.captured;
+                const mesh = new THREE.Mesh(
+                    isCastle || isCapture ? new THREE.RingGeometry(0.66, 0.88, 32) : new THREE.CircleGeometry(0.34, 24),
+                    new THREE.MeshBasicMaterial({ color: isCastle ? 0xfbbf24 : (isCapture ? 0xf87171 : 0x34d399), side: THREE.DoubleSide })
+                );
+                mesh.rotation.x = -Math.PI / 2; mesh.position.set(pos.x, 0.12, pos.z);
+                mesh.userData = { targetSquare: m.to };
+                highlightsGroup.add(mesh);
+            });
+        }
+
+        function handleSquareTap(sq) {
+            if (isAnimating || isMatchOver() || (vsAI && game.turn() === 'b')) return;
+            const matchingMoves = legalMovesForSelected.filter(m => m.to === sq);
+            if (selectedSquare && matchingMoves.length > 0) {
+                const moveResult = executeChessMoveAllowingAny({ from: selectedSquare, to: sq, promotion: 'q' });
+                if (!moveResult) return;
+                selectedSquare = null; legalMovesForSelected = [];
+                animateChessMove(moveResult, () => {
+                    updateHUD();
+                    if (!isMatchOver() && vsAI && game.turn() === 'b') setTimeout(triggerAIMove, 260);
+                });
+                return;
+            }
+            const pieceOnSq = game.get(sq);
+            if (pieceOnSq && pieceOnSq.color === game.turn()) {
+                selectedSquare = sq;
+                legalMovesForSelected = getPseudoLegalMoves(sq);
+                showLegalMoveHighlights(sq, legalMovesForSelected);
+                sfx.playPieceVoice(pieceOnSq.type, pieceOnSq.color);
+            } else {
+                selectedSquare = null; legalMovesForSelected = [];
+                while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
+            }
+        }
+
+        function triggerAIMove() {
+            if (isMatchOver() || isAnimating) return;
+            const moves = getPseudoLegalMoves();
+            if (moves.length === 0) return;
+            const captures = moves.filter(m => m.captured);
+            const chosen = captures.length > 0 ? captures[0] : moves[Math.floor(Math.random() * moves.length)];
+            const executed = executeChessMoveAllowingAny(chosen);
+            if (executed) animateChessMove(executed, () => updateHUD());
+        }
+
+        function toggleTray(trayName) {
+            const body = document.getElementById(`${trayName}-body`);
+            const icon = document.getElementById(`${trayName}-toggle-icon`);
+            if (body && icon) {
+                const isHidden = body.classList.toggle('hidden');
+                icon.textContent = isHidden ? 'open_in_full' : 'remove';
+            }
+        }
+
+        function updateHUD() {
+            const turn = game.turn();
+            document.getElementById('turn-text').textContent = turn === 'w' ? "Marble Cats' Turn" : (vsAI ? 'Obsidian AI Thinking...' : "Obsidian Cats' Turn");
+        }
+
+        function toggleGameMode() { vsAI = !vsAI; document.getElementById('mode-label').textContent = vsAI ? 'vs AI Cat Master' : '2P Pass & Play'; }
+        function cycleDifficulty() { aiDifficulty = (aiDifficulty % 3) + 1; document.getElementById('diff-label').textContent = { 1: 'AI: Playful', 2: 'AI: Clever', 3: 'AI: Royal' }[aiDifficulty]; }
+        function cycleCameraAngle() { camState.targetTheta += Math.PI / 2; }
+        function undoLastMove() {
+            if (stateUndoStack.length === 0) return;
+            const snap = stateUndoStack.pop();
+            game.load(snap.fen); customGameOver = snap.customGameOver; customMoveHistory = snap.history;
+            syncBoardPieces();
+        }
+        function toggleSound() { sfx.enabled = !sfx.enabled; document.getElementById('sound-icon').textContent = sfx.enabled ? 'volume_up' : 'volume_off'; }
+        function resetGame() { game.reset(); customGameOver = null; customMoveHistory = []; stateUndoStack = []; syncBoardPieces(); }
+        function closeGameOverModal() { document.getElementById('gameover-modal').classList.add('hidden'); }
+
+        function updateCameraTransform(immediate = false) {
+            if (immediate) { camState.theta = camState.targetTheta; camState.phi = camState.targetPhi; camState.radius = camState.targetRadius; }
+            else {
+                camState.theta += (camState.targetTheta - camState.theta) * 0.1;
+                camState.phi += (camState.targetPhi - camState.phi) * 0.1;
+                camState.radius += (camState.targetRadius - camState.radius) * 0.1;
+            }
+            camera.position.set(camState.radius * Math.sin(camState.phi) * Math.sin(camState.theta), camState.radius * Math.cos(camState.phi), camState.radius * Math.sin(camState.phi) * Math.cos(camState.theta));
+            camera.lookAt(0, 0.4, 0);
+        }
+
+        function setupInteractionListeners() {
+            const dom = renderer.domElement;
+            dom.addEventListener('mousedown', e => { camState.isDragging = true; camState.dragMoved = false; camState.prevX = e.clientX; camState.prevY = e.clientY; });
+            window.addEventListener('mousemove', e => {
+                if (!camState.isDragging) return;
+                const dx = e.clientX - camState.prevX, dy = e.clientY - camState.prevY;
+                if (Math.abs(dx) > 4 || Math.abs(dy) > 4) camState.dragMoved = true;
+                camState.targetTheta -= dx * 0.0075;
+                camState.targetPhi = Math.max(0.2, Math.min(1.38, camState.targetPhi - dy * 0.0065));
+                camState.prevX = e.clientX; camState.prevY = e.clientY;
+            });
+            window.addEventListener('mouseup', e => {
+                if (camState.isDragging && !camState.dragMoved) performBoardRaycast(e.clientX, e.clientY);
+                camState.isDragging = false;
+            });
+        }
+
+        function performBoardRaycast(clientX, clientY) {
+            mouse.x = (clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hitHighlights = raycaster.intersectObjects(highlightsGroup.children, true);
+            if (hitHighlights.length > 0 && hitHighlights[0].object.userData.targetSquare) {
+                handleSquareTap(hitHighlights[0].object.userData.targetSquare); return;
+            }
+            const hitPieces = raycaster.intersectObjects(piecesGroup.children, true);
+            if (hitPieces.length > 0) {
+                let obj = hitPieces[0].object;
+                while (obj && !obj.userData.square && obj.parent) obj = obj.parent;
+                if (obj && obj.userData.square) { handleSquareTap(obj.userData.square); return; }
+            }
+            const hitSquares = raycaster.intersectObjects(boardGroup.children, false);
+            for (const hit of hitSquares) {
+                if (hit.object.userData && hit.object.userData.square) { handleSquareTap(hit.object.userData.square); return; }
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1);
+            updateCameraTransform(false);
+            for (let i = activeAnimations.length - 1; i >= 0; i--) {
+                const anim = activeAnimations[i];
+                anim.elapsed += dt;
+                const progress = Math.min(anim.elapsed / anim.duration, 1.0);
+                if (anim.mesh) {
+                    anim.mesh.position.lerpVectors(anim.startPos, anim.endPos, progress);
+                    anim.mesh.position.y = anim.startPos.y + Math.sin(progress * Math.PI) * anim.arcHeight;
+                }
+                if (anim.isCapture && !anim.shattered && progress >= 0.74) {
+                    anim.shattered = true;
+                    sfx.playShatter(anim.capturedColor);
+                    triggerShatterExplosion(anim.endPos, anim.capturedColor);
+                    if (anim.defenderMesh) piecesGroup.remove(anim.defenderMesh);
+                }
+                if (progress >= 1.0) {
+                    if (anim.mesh) anim.mesh.position.copy(anim.endPos);
+                    if (anim.onComplete) anim.onComplete();
+                    activeAnimations.splice(i, 1);
+                }
+            }
+            for (let i = shatterParticles.length - 1; i >= 0; i--) {
+                const p = shatterParticles[i];
+                p.life -= dt * 1.45;
+                p.vel.y -= 15.0 * dt;
+                p.mesh.position.addScaledVector(p.vel, dt);
+                if (p.life <= 0) { particlesGroup.remove(p.mesh); shatterParticles.splice(i, 1); }
+            }
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function () { init3D(); animate(); };
+    <\/script>
+</body>
+</html>
