@@ -1,8 +1,8 @@
 # 🐾 Felis Regia — 3D Fantasy Cat Chess
 
-**Felis Regia** is a zero-dependency, browser-playable 3D Fantasy Cat Chess application built with **Three.js**, **Chess.js**, **Web Audio API**, and a **Material Design 3** glassmorphic UI.
+Zero-build static 3D WebGL Cat Chess application for PC and Mobile.
 
-## 🚀 Deploying to GitHub & Vercel
-
-1. Unzip this folder and upload index.html, package.json, vercel.json, and README.md to your GitHub repository.
-2. Go to https://vercel.com/new, import your repository, and click **Deploy**.
+## 🚀 How to Deploy on GitHub + Vercel (No White Screen)
+1. Delete `package.json` from your GitHub repository if it exists (so Vercel treats the repo as a pure static site).
+2. Upload `index.html`, `vercel.json`, and `README.md` to the root of your repository.
+3. Commit your changes — Vercel will immediately serve `index.html`!
