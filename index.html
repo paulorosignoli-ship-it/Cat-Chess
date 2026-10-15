@@ -89,30 +89,41 @@
 <body>
     <div id="canvas-container"></div>
 
+    <!-- MAIN HUD OVERLAY -->
     <div class="fixed inset-0 pointer-events-none z-10 flex flex-col justify-between p-2.5 sm:p-5" style="height: 100dvh;">
-        <header class="w-full flex flex-col lg:flex-row items-center justify-between gap-2 sm:gap-3 pointer-events-auto">
-            <div class="m3-surface rounded-full px-3.5 py-2 flex items-center gap-2.5 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
-                <div class="flex items-center gap-2">
+        <header class="w-full flex items-center justify-between gap-2 pointer-events-auto">
+            <!-- Brand + Turn Indicator + Mobile Sandwich Button -->
+            <div class="m3-surface rounded-full px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
+                <div class="flex items-center gap-2 min-w-0">
                     <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center shadow-md shrink-0">
                         <span class="material-symbols-rounded text-white text-lg sm:text-xl">pets</span>
                     </div>
-                    <div>
-                        <h1 class="font-display text-xs sm:text-base font-bold tracking-wider text-purple-100 leading-none">FELIS REGIA</h1>
-                        <p id="scene-subtitle" class="text-[10px] sm:text-[11px] text-purple-300/80 font-medium tracking-wide">Enchanted Moss Forest</p>
+                    <div class="truncate">
+                        <h1 class="font-display text-xs sm:text-base font-bold tracking-wider text-purple-100 leading-none truncate">FELIS REGIA</h1>
+                        <p id="scene-subtitle" class="text-[10px] sm:text-[11px] text-purple-300/80 font-medium tracking-wide truncate">Enchanted Moss Forest</p>
                     </div>
                 </div>
+
                 <div class="h-6 w-[1px] bg-white/15 hidden sm:block"></div>
-                <div id="turn-badge" class="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/15">
-                    <span id="turn-dot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]"></span>
-                    <span id="turn-text" class="text-[11px] sm:text-sm font-semibold tracking-wide text-stone-100 whitespace-nowrap">Marble Cats' Turn</span>
-                </div>
-                <div id="status-alert" class="hidden items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/25 border border-red-400/50 text-red-200 text-[11px] font-bold check-alert">
-                    <span class="material-symbols-rounded text-xs">warning</span>
-                    <span id="status-alert-text">CHECK!</span>
+
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <div id="turn-badge" class="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/15">
+                        <span id="turn-dot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]"></span>
+                        <span id="turn-text" class="text-[11px] sm:text-sm font-semibold tracking-wide text-stone-100 whitespace-nowrap">Marble's Turn</span>
+                    </div>
+                    <div id="status-alert" class="hidden items-center gap-1 px-2 py-1 rounded-full bg-red-500/25 border border-red-400/50 text-red-200 text-[10px] sm:text-xs font-bold check-alert">
+                        <span class="material-symbols-rounded text-xs">warning</span>
+                        <span id="status-alert-text">CHECK!</span>
+                    </div>
+                    <!-- SANDWICH MENU BUTTON (Visible on Mobile/Tablet < 1024px) -->
+                    <button onclick="toggleMobileMenu()" class="lg:hidden m3-btn w-9 h-9 rounded-full bg-purple-400/20 hover:bg-purple-400/30 border border-purple-300/30 flex items-center justify-center text-purple-100 shadow-md" aria-label="Open Menu">
+                        <span class="material-symbols-rounded text-xl">menu</span>
+                    </button>
                 </div>
             </div>
 
-            <nav aria-label="Scenery Themes" class="m3-surface rounded-full p-1 sm:p-1.5 flex items-center gap-1 sm:gap-1.5 max-w-full overflow-x-auto no-scrollbar">
+            <!-- DESKTOP SCENERY BAR (Hidden on mobile, moved to Sandwich Menu) -->
+            <nav aria-label="Scenery Themes" class="hidden lg:flex m3-surface rounded-full p-1.5 items-center gap-1.5 max-w-full overflow-x-auto no-scrollbar">
                 <button onclick="setSceneryTheme('forest')" data-theme="forest" class="theme-chip m3-chip active flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
                     <span class="material-symbols-rounded text-base">forest</span><span>Forest</span>
                 </button>
@@ -137,10 +148,11 @@
             </nav>
         </header>
 
-        <div class="flex justify-between items-end sm:items-center my-auto pointer-events-none gap-2">
-            <div id="captures-window" class="m3-surface rounded-2xl p-2 sm:p-2.5 flex flex-col gap-1.5 pointer-events-auto max-w-[155px] sm:max-w-[220px] transition-all duration-300">
+        <!-- DESKTOP FLOATING TRAYS (Hidden on Mobile so the 3D board is 100% clear) -->
+        <div class="hidden lg:flex justify-between items-center my-auto pointer-events-none gap-2">
+            <div id="captures-window" class="m3-surface rounded-2xl p-2.5 flex flex-col gap-1.5 pointer-events-auto w-[210px] transition-all duration-300">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-[10px] sm:text-[11px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
+                    <span class="text-[11px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
                         <span class="material-symbols-rounded text-sm">swords</span><span>Captures</span>
                     </span>
                     <button onclick="toggleTray('captures')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300">
@@ -148,20 +160,20 @@
                     </button>
                 </div>
                 <div id="captures-body" class="flex flex-col gap-1.5">
-                    <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-stone-300 font-semibold border-b border-white/10 pb-1">
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-stone-300 font-semibold border-b border-white/10 pb-1">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-stone-100"></span>Marble</span>
                     </div>
-                    <div id="captured-by-white" class="flex flex-wrap gap-1 min-h-[20px] text-xs sm:text-sm leading-none"></div>
-                    <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-stone-400 font-semibold border-b border-white/10 pb-1 pt-0.5">
+                    <div id="captured-by-white" class="flex flex-wrap gap-1 min-h-[20px] text-sm leading-none"></div>
+                    <div class="flex items-center justify-between gap-2 text-[11px] text-stone-400 font-semibold border-b border-white/10 pb-1 pt-0.5">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-950 border border-purple-400"></span>Obsidian</span>
                     </div>
-                    <div id="captured-by-black" class="flex flex-wrap gap-1 min-h-[20px] text-xs sm:text-sm leading-none"></div>
+                    <div id="captured-by-black" class="flex flex-wrap gap-1 min-h-[20px] text-sm leading-none"></div>
                 </div>
             </div>
 
-            <div id="chronicle-window" class="m3-surface rounded-2xl p-2 sm:p-3 flex flex-col gap-1.5 pointer-events-auto w-36 sm:w-52 transition-all duration-300">
+            <div id="chronicle-window" class="m3-surface rounded-2xl p-3 flex flex-col gap-1.5 pointer-events-auto w-52 transition-all duration-300">
                 <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1 text-[10px] sm:text-[11px] uppercase tracking-wider text-purple-300 font-bold">
+                    <div class="flex items-center gap-1 text-[11px] uppercase tracking-wider text-purple-300 font-bold">
                         <span class="material-symbols-rounded text-sm">history_edu</span><span>Chronicle</span>
                         <span id="move-counter" class="text-[10px] text-stone-400 font-normal">(1)</span>
                     </div>
@@ -170,41 +182,161 @@
                     </button>
                 </div>
                 <div id="chronicle-body">
-                    <div id="move-history" class="text-[11px] sm:text-xs text-stone-300 max-h-24 sm:max-h-28 overflow-y-auto space-y-1 pr-1 font-mono">
+                    <div id="move-history" class="text-xs text-stone-300 max-h-28 overflow-y-auto space-y-1 pr-1 font-mono">
                         <div class="text-stone-400 italic">Tap any Marble cat to begin...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <footer class="w-full flex flex-col sm:flex-row items-center justify-center gap-2 pointer-events-auto pb-1 sm:pb-0">
-            <div class="m3-surface rounded-full p-1.5 px-2.5 sm:px-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                <button id="btn-mode" onclick="toggleGameMode()" class="m3-btn flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-purple-300 text-purple-950 font-semibold text-xs sm:text-sm shadow-sm">
-                    <span id="mode-icon" class="material-symbols-rounded text-base sm:text-lg">smart_toy</span>
+        <!-- BOTTOM QUICK BAR: Minimal 4-icon pill on Mobile, Full Dock on Desktop -->
+        <footer class="w-full flex items-center justify-center pointer-events-auto pb-1 sm:pb-0">
+            <!-- Mobile Minimal Quick Bar -->
+            <div class="flex lg:hidden m3-surface rounded-full p-1 px-2 items-center gap-1 shadow-xl">
+                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 text-stone-200 text-xs font-medium" title="Undo">
+                    <span class="material-symbols-rounded text-base">undo</span>
+                    <span>Undo</span>
+                </button>
+                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 text-stone-200 text-xs font-medium" title="Camera View">
+                    <span class="material-symbols-rounded text-base">videocam</span>
+                    <span>View</span>
+                </button>
+                <button onclick="toggleSound()" class="m3-btn flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-stone-200" title="Sound">
+                    <span id="sound-icon-mobile" class="material-symbols-rounded text-base">volume_up</span>
+                </button>
+                <button onclick="toggleMobileMenu()" class="m3-btn flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-300 text-purple-950 text-xs font-bold">
+                    <span class="material-symbols-rounded text-base">tune</span>
+                    <span>Options</span>
+                </button>
+            </div>
+
+            <!-- Desktop Full Dock -->
+            <div class="hidden lg:flex m3-surface rounded-full p-1.5 px-3 items-center justify-center gap-2">
+                <button id="btn-mode" onclick="toggleGameMode()" class="m3-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-300 text-purple-950 font-semibold text-sm shadow-sm">
+                    <span id="mode-icon" class="material-symbols-rounded text-lg">smart_toy</span>
                     <span id="mode-label">vs AI Cat Master</span>
                 </button>
-                <button id="btn-difficulty" onclick="cycleDifficulty()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
+                <button id="btn-difficulty" onclick="cycleDifficulty()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-sm font-medium">
                     <span class="material-symbols-rounded text-base text-amber-300">psychology</span>
                     <span id="diff-label">AI: Clever</span>
                 </button>
-                <div class="h-5 w-[1px] bg-white/15 mx-0.5 hidden sm:block"></div>
-                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
-                    <span class="material-symbols-rounded text-base sm:text-lg">videocam</span>
-                    <span id="cam-label" class="hidden sm:inline">Orbit View</span>
+                <div class="h-5 w-[1px] bg-white/15 mx-0.5"></div>
+                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-sm font-medium">
+                    <span class="material-symbols-rounded text-lg">videocam</span>
+                    <span id="cam-label">Orbit View</span>
                 </button>
-                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
-                    <span class="material-symbols-rounded text-base sm:text-lg">undo</span>
-                    <span class="hidden sm:inline">Undo</span>
+                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-sm font-medium">
+                    <span class="material-symbols-rounded text-lg">undo</span>
+                    <span>Undo</span>
                 </button>
                 <button id="btn-sound" onclick="toggleSound()" class="m3-btn flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200">
-                    <span id="sound-icon" class="material-symbols-rounded text-base sm:text-lg">volume_up</span>
+                    <span id="sound-icon" class="material-symbols-rounded text-lg">volume_up</span>
                 </button>
-                <button onclick="resetGame()" class="m3-btn flex items-center gap-1 px-3.5 py-2 rounded-full bg-rose-500/25 hover:bg-rose-500/35 border border-rose-400/30 text-rose-200 text-xs sm:text-sm font-semibold">
-                    <span class="material-symbols-rounded text-base sm:text-lg">restart_alt</span>
+                <button onclick="resetGame()" class="m3-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-rose-500/25 hover:bg-rose-500/35 border border-rose-400/30 text-rose-200 text-sm font-semibold">
+                    <span class="material-symbols-rounded text-lg">restart_alt</span>
                     <span>New Match</span>
                 </button>
             </div>
         </footer>
+    </div>
+
+    <!-- MOBILE SANDWICH SLIDE-OVER DRAWER -->
+    <div id="mobile-menu-drawer" class="fixed inset-0 z-40 hidden pointer-events-auto">
+        <!-- Backdrop -->
+        <div onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/65 backdrop-blur-sm transition-opacity"></div>
+
+        <!-- Drawer Sheet -->
+        <aside class="relative ml-auto w-80 max-w-[86vw] h-full m3-surface border-l border-white/15 p-4 flex flex-col gap-4 overflow-y-auto z-10">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-rounded text-purple-300">pets</span>
+                    <h2 class="font-display text-sm font-bold tracking-wider text-purple-100">SANCTUARY MENU</h2>
+                </div>
+                <button onclick="toggleMobileMenu()" class="m3-btn w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-stone-200">
+                    <span class="material-symbols-rounded text-lg">close</span>
+                </button>
+            </div>
+
+            <!-- 1. Match Controls -->
+            <div class="space-y-2">
+                <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">Match Settings</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="toggleGameMode()" class="m3-btn p-2.5 rounded-2xl bg-purple-300 text-purple-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+                        <span id="mode-icon-mobile" class="material-symbols-rounded text-base">smart_toy</span>
+                        <span id="mode-label-mobile">vs AI Master</span>
+                    </button>
+                    <button id="btn-difficulty-mobile" onclick="cycleDifficulty()" class="m3-btn p-2.5 rounded-2xl bg-white/10 border border-white/15 text-stone-100 font-semibold text-xs flex items-center justify-center gap-1.5">
+                        <span class="material-symbols-rounded text-base text-amber-300">psychology</span>
+                        <span id="diff-label-mobile">AI: Clever</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="cycleCameraAngle(); toggleMobileMenu();" class="m3-btn p-2.5 rounded-2xl bg-white/10 border border-white/10 text-stone-200 text-xs font-medium flex items-center justify-center gap-1.5">
+                        <span class="material-symbols-rounded text-base">videocam</span>
+                        <span id="cam-label-mobile">Orbit View</span>
+                    </button>
+                    <button onclick="resetGame(); toggleMobileMenu();" class="m3-btn p-2.5 rounded-2xl bg-rose-500/25 border border-rose-400/30 text-rose-200 text-xs font-semibold flex items-center justify-center gap-1.5">
+                        <span class="material-symbols-rounded text-base">restart_alt</span>
+                        <span>New Match</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 3D Scenery Theme Picker -->
+            <div class="space-y-2">
+                <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">3D Scenery World</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button onclick="setSceneryTheme('forest')" data-theme="forest" class="theme-chip m3-chip active flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">forest</span><span>Forest</span>
+                    </button>
+                    <button onclick="setSceneryTheme('cathouse')" data-theme="cathouse" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">cottage</span><span>Cat House</span>
+                    </button>
+                    <button onclick="setSceneryTheme('meadows')" data-theme="meadows" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">local_florist</span><span>Meadows</span>
+                    </button>
+                    <button onclick="setSceneryTheme('alley')" data-theme="alley" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">location_city</span><span>City Alley</span>
+                    </button>
+                    <button onclick="setSceneryTheme('paradise')" data-theme="paradise" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">cloud</span><span>Paradise</span>
+                    </button>
+                    <button onclick="setSceneryTheme('starlight')" data-theme="starlight" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">nights_stay</span><span>Starlight</span>
+                    </button>
+                    <button onclick="setSceneryTheme('temple')" data-theme="temple" class="theme-chip m3-chip col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs">
+                        <span class="material-symbols-rounded text-base">account_balance</span><span>Ancient Bastet Temple</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Captures Tray inside Drawer -->
+            <div class="rounded-2xl bg-black/30 border border-white/10 p-3 space-y-2">
+                <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
+                    <span class="material-symbols-rounded text-sm">swords</span><span>Captured Cats</span>
+                </div>
+                <div class="text-[11px] text-stone-300 font-semibold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-stone-100"></span><span>Marble Captures:</span>
+                </div>
+                <div id="captured-by-white-mobile" class="flex flex-wrap gap-1 min-h-[18px] text-xs"></div>
+                <div class="text-[11px] text-stone-400 font-semibold flex items-center gap-1.5 pt-1 border-t border-white/10">
+                    <span class="w-2 h-2 rounded-full bg-purple-950 border border-purple-400"></span><span>Obsidian Captures:</span>
+                </div>
+                <div id="captured-by-black-mobile" class="flex flex-wrap gap-1 min-h-[18px] text-xs"></div>
+            </div>
+
+            <!-- 4. Move Chronicle inside Drawer -->
+            <div class="rounded-2xl bg-black/30 border border-white/10 p-3 space-y-1.5 flex-1 flex flex-col min-h-[120px]">
+                <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
+                    <span class="material-symbols-rounded text-sm">history_edu</span>
+                    <span>Move Chronicle</span>
+                    <span id="move-counter-mobile" class="text-[10px] text-stone-400 font-normal">(1)</span>
+                </div>
+                <div id="move-history-mobile" class="text-xs text-stone-300 overflow-y-auto space-y-1 pr-1 font-mono flex-1">
+                    <div class="text-stone-400 italic">Tap any Marble cat to begin...</div>
+                </div>
+            </div>
+        </aside>
     </div>
 
     <div id="promotion-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-black/65 backdrop-blur-md p-4">
@@ -1212,6 +1344,13 @@
 
         const pieceIcons = { p: '🐾', n: '⚡', b: '🔮', r: '🏰', q: '👑', k: '🦁' };
 
+        function toggleMobileMenu() {
+            const drawer = document.getElementById('mobile-menu-drawer');
+            if (!drawer) return;
+            drawer.classList.toggle('hidden');
+            sfx.playSelect();
+        }
+
         function toggleTray(trayName) {
             const body = document.getElementById(trayName + '-body');
             const icon = document.getElementById(trayName + '-toggle-icon');
@@ -1224,7 +1363,10 @@
 
         function updateHUD() {
             const turn = game.turn();
-            document.getElementById('turn-text').textContent = turn === 'w' ? "Marble Cats' Turn" : (vsAI ? 'Obsidian AI Thinking...' : "Obsidian Cats' Turn");
+            const isMobile = window.innerWidth < 640;
+            document.getElementById('turn-text').textContent = turn === 'w'
+                ? (isMobile ? "Marble's Turn" : "Marble Cats' Turn")
+                : (vsAI ? 'AI Thinking...' : (isMobile ? "Obsidian's Turn" : "Obsidian Cats' Turn"));
             const statusAlert = document.getElementById('status-alert');
             const statusAlertText = document.getElementById('status-alert-text');
             if (customGameOver || game.in_checkmate()) {
@@ -1246,13 +1388,26 @@
                     else blackCaptures.push(m.captured);
                 }
             });
-            document.getElementById('captured-by-white').innerHTML = whiteCaptures.map(p => '<span>' + (pieceIcons[p] || '🐾') + '</span>').join('') || '<span class="text-[10px] text-stone-500">None yet</span>';
-            document.getElementById('captured-by-black').innerHTML = blackCaptures.map(p => '<span>' + (pieceIcons[p] || '🐾') + '</span>').join('') || '<span class="text-[10px] text-stone-500">None yet</span>';
+            const wCapHtml = whiteCaptures.map(p => '<span>' + (pieceIcons[p] || '🐾') + '</span>').join('') || '<span class="text-[10px] text-stone-500">None yet</span>';
+            const bCapHtml = blackCaptures.map(p => '<span>' + (pieceIcons[p] || '🐾') + '</span>').join('') || '<span class="text-[10px] text-stone-500">None yet</span>';
+            document.getElementById('captured-by-white').innerHTML = wCapHtml;
+            document.getElementById('captured-by-black').innerHTML = bCapHtml;
+            const wCapMob = document.getElementById('captured-by-white-mobile');
+            const bCapMob = document.getElementById('captured-by-black-mobile');
+            if (wCapMob) wCapMob.innerHTML = wCapHtml;
+            if (bCapMob) bCapMob.innerHTML = bCapHtml;
 
             const moveHistoryEl = document.getElementById('move-history');
-            document.getElementById('move-counter').textContent = '(' + (Math.floor(customMoveHistory.length / 2) + 1) + ')';
+            const moveHistoryMob = document.getElementById('move-history-mobile');
+            const countStr = '(' + (Math.floor(customMoveHistory.length / 2) + 1) + ')';
+            document.getElementById('move-counter').textContent = countStr;
+            const countMob = document.getElementById('move-counter-mobile');
+            if (countMob) countMob.textContent = countStr;
+
             if (customMoveHistory.length === 0) {
-                moveHistoryEl.innerHTML = '<div class="text-stone-400 italic">Tap any Marble cat to begin...</div>';
+                const emptyHtml = '<div class="text-stone-400 italic">Tap any Marble cat to begin...</div>';
+                moveHistoryEl.innerHTML = emptyHtml;
+                if (moveHistoryMob) moveHistoryMob.innerHTML = emptyHtml;
             } else {
                 let pairsHtml = '';
                 for (let i = 0; i < customMoveHistory.length; i += 2) {
@@ -1263,27 +1418,30 @@
                 }
                 moveHistoryEl.innerHTML = pairsHtml;
                 moveHistoryEl.scrollTop = moveHistoryEl.scrollHeight;
+                if (moveHistoryMob) {
+                    moveHistoryMob.innerHTML = pairsHtml;
+                    moveHistoryMob.scrollTop = moveHistoryMob.scrollHeight;
+                }
             }
         }
 
         function checkEndConditions() {
-            if (!isMatchOver()) return;
-            const modal = document.getElementById('gameover-modal');
-            const title = document.getElementById('gameover-title');
-            const desc = document.getElementById('gameover-desc');
-            if (customGameOver && customGameOver.reason === 'king_captured') {
-                const winner = customGameOver.winner === 'w' ? 'Marble Cats' : 'Obsidian Cats';
-                title.textContent = 'Monarch Shattered!';
-                desc.textContent = 'The enemy King was left exposed and captured! The ' + winner + ' claim total victory!';
-            } else {
-                title.textContent = 'Royal Checkmate!';
-                desc.textContent = 'The Sanctuary Board has been conquered!';
-            }
-            modal.classList.remove('hidden'); modal.classList.add('flex');
+        function toggleGameMode() {
+            vsAI = !vsAI;
+            const label = vsAI ? 'vs AI Cat Master' : '2P Pass & Play';
+            document.getElementById('mode-label').textContent = label;
+            const mobLabel = document.getElementById('mode-label-mobile');
+            if (mobLabel) mobLabel.textContent = vsAI ? 'vs AI Master' : '2P Pass & Play';
+            sfx.playSelect();
         }
-
-        function toggleGameMode() { vsAI = !vsAI; document.getElementById('mode-label').textContent = vsAI ? 'vs AI Cat Master' : '2P Pass & Play'; sfx.playSelect(); }
-        function cycleDifficulty() { aiDifficulty = (aiDifficulty % 3) + 1; document.getElementById('diff-label').textContent = { 1: 'AI: Playful', 2: 'AI: Clever', 3: 'AI: Royal' }[aiDifficulty]; sfx.playSelect(); }
+        function cycleDifficulty() {
+            aiDifficulty = (aiDifficulty % 3) + 1;
+            const txt = { 1: 'AI: Playful', 2: 'AI: Clever', 3: 'AI: Royal' }[aiDifficulty];
+            document.getElementById('diff-label').textContent = txt;
+            const mobDiff = document.getElementById('diff-label-mobile');
+            if (mobDiff) mobDiff.textContent = txt;
+            sfx.playSelect();
+        }
         function cycleCameraAngle() { camState.targetTheta += Math.PI / 2; sfx.playSelect(); }
         function undoLastMove() {
             if (stateUndoStack.length === 0) return;
@@ -1292,7 +1450,13 @@
             if (snap.castlingRights) castlingRights = { ...snap.castlingRights };
             closeGameOverModal(); syncBoardPieces(); sfx.playSelect();
         }
-        function toggleSound() { sfx.enabled = !sfx.enabled; document.getElementById('sound-icon').textContent = sfx.enabled ? 'volume_up' : 'volume_off'; }
+        function toggleSound() {
+            sfx.enabled = !sfx.enabled;
+            const icon = sfx.enabled ? 'volume_up' : 'volume_off';
+            document.getElementById('sound-icon').textContent = icon;
+            const mobSound = document.getElementById('sound-icon-mobile');
+            if (mobSound) mobSound.textContent = icon;
+        }
         function resetGame() { closeGameOverModal(); game.reset(); customGameOver = null; customMoveHistory = []; stateUndoStack = []; castlingRights = { wK: true, wQ: true, bK: true, bQ: true }; syncBoardPieces(); sfx.playSelect(); }
         function closeGameOverModal() { document.getElementById('gameover-modal').classList.add('hidden'); document.getElementById('gameover-modal').classList.remove('flex'); }
 
