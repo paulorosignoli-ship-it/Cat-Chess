@@ -1320,6 +1320,19 @@
             executePlayerMove(moveData);
         }
 
+        function syncPassAndPlayCamera() {
+            if (!vsAI && !isMatchOver()) {
+                camState.targetTheta = game.turn() === 'w' ? 0 : Math.PI;
+                const isMobile = window.innerWidth < 640;
+                camState.targetPhi = isMobile ? 1.02 : 0.92;
+                const label = game.turn() === 'w' ? 'Marble Throne' : 'Obsidian Throne';
+                const camEl = document.getElementById('cam-label');
+                const camMob = document.getElementById('cam-label-mobile');
+                if (camEl) camEl.textContent = label;
+                if (camMob) camMob.textContent = label;
+            }
+        }
+
         function executePlayerMove(moveInput) {
             const moveResult = executeChessMoveAllowingAny(moveInput);
             if (!moveResult) return;
@@ -1327,18 +1340,242 @@
             animateChessMove(moveResult, () => {
                 updateHUD();
                 checkEndConditions();
-                if (!isMatchOver() && vsAI && game.turn() === 'b') setTimeout(triggerAIMove, 260);
+                if (!isMatchOver()) {
+                    if (vsAI && game.turn() === 'b') {
+                        setTimeout(triggerAIMove, 260);
+                    } else if (!vsAI) {
+                        setTimeout(syncPassAndPlayCamera, 180);
+                    }
+                }
             });
+        }
+
+        const pieceValues = { p: 100, n: 320, b: 335, r: 500, q: 920, k: 20000 };
+        const pstPawn = [
+            [0,  0,  0,  0,  0,  0,  0,  0],
+            [50, 50, 50, 50, 50, 50, 50, 50],
+            [12, 12, 24, 34, 34, 24, 12, 12],
+            [6,  6, 12, 28, 28, 12,  6,  6],
+            [0,  0,  0, 22, 22,  0,  0,  0],
+            [5, -5,-10,  0,  0,-10, -5,  5],
+            [5, 10, 10,-22,-22, 10, 10,  5],
+            [0,  0,  0,  0,  0,  0,  0,  0]
+        ];
+        const pstKnight = [
+            [-50,-40,-30,-30,-30,-30,-40,-50],
+            [-40,-20,  0,  4,  4,  0,-20,-40],
+            [-30,  4, 12, 16, 16, 12,  4,-30],
+            [-30,  6, 16, 22, 22, 16,  6,-30],
+            [-30,  4, 16, 22, 22, 16,  4,-30],
+            [-30,  6, 12, 16, 16, 12,  6,-30],
+            [-40,-20,  0,  2,  2,  0,-20,-40],
+            [-50,-40,-30,-30,-30,-30,-40,-50]
+        ];
+        const pstBishop = [
+            [-20,-10,-10,-10,-10,-10,-10,-20],
+            [-10,  4,  0,  0,  0,  0,  4,-10],
+            [-10,  8, 10, 12, 12, 10,  8,-10],
+            [-10,  2, 12, 14, 14, 12,  2,-10],
+            [-10,  4,  8, 14, 14,  8,  4,-10],
+            [-10, 10, 10, 10, 10, 10, 10,-10],
+            [-10,  6,  0,  0,  0,  0,  6,-10],
+            [-20,-10,-10,-10,-10,-10,-10,-20]
+        ];
+        const pstRook = [
+            [  0,  0,  4,  8,  8,  4,  0,  0],
+            [ -5,  0,  0,  0,  0,  0,  0, -5],
+            [ -5,  0,  0,  0,  0,  0,  0, -5],
+            [ -5,  0,  0,  0,  0,  0,  0, -5],
+            [ -5,  0,  0,  0,  0,  0,  0, -5],
+            [ -5,  0,  0,  0,  0,  0,  0, -5],
+            [ 10, 14, 14, 14, 14, 14, 14, 10],
+            [  0,  0,  0,  6,  6,  0,  0,  0]
+        ];
+        const pstQueen = [
+            [-20,-10,-10, -5, -5,-10,-10,-20],
+            [-10,  0,  0,  0,  0,  0,  0,-10],
+            [-10,  0,  6,  6,  6,  6,  0,-10],
+            [ -5,  0,  6,  8,  8,  6,  0, -5],
+            [  0,  0,  6,  8,  8,  6,  0, -5],
+            [-10,  5,  6,  6,  6,  6,  0,-10],
+            [-10,  0,  5,  0,  0,  0,  0,-10],
+            [-20,-10,-10, -5, -5,-10,-10,-20]
+        ];
+        const pstKing = [
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-20,-30,-30,-40,-40,-30,-30,-20],
+            [-10,-20,-20,-20,-20,-20,-20,-10],
+            [ 18, 20,  0,  0,  0,  0, 20, 18],
+            [ 20, 32, 12,  0,  0, 12, 32, 20]
+        ];
+        const pstTableMap = { p: pstPawn, n: pstKnight, b: pstBishop, r: pstRook, q: pstQueen, k: pstKing };
+
+        function evaluateBoard(chessInstance) {
+            if (chessInstance.in_checkmate()) {
+                return chessInstance.turn() === 'b' ? -99999 : 99999;
+            }
+            if (chessInstance.in_draw() || chessInstance.in_stalemate() || chessInstance.in_threefold_repetition()) {
+                return 0;
+            }
+            const board = chessInstance.board();
+            let score = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let f = 0; f < 8; f++) {
+                    const piece = board[r][f];
+                    if (piece) {
+                        const baseVal = pieceValues[piece.type] || 0;
+                        const table = pstTableMap[piece.type];
+                        const tableRow = piece.color === 'w' ? r : (7 - r);
+                        const posVal = table ? table[tableRow][f] : 0;
+                        const total = baseVal + posVal;
+                        score += piece.color === 'b' ? total : -total;
+                    }
+                }
+            }
+            if (chessInstance.in_check()) {
+                score += chessInstance.turn() === 'w' ? 35 : -35;
+            }
+            return score;
+        }
+
+        function scoreMoveOrder(m) {
+            let s = 0;
+            if (m.captured) s += 10 * (pieceValues[m.captured] || 100) - ((pieceValues[m.piece] || 100) * 0.1);
+            if (m.promotion) s += (pieceValues[m.promotion] || 900);
+            if (m.san && m.san.includes('+')) s += 45;
+            return s;
+        }
+
+        function quiescenceSearch(chessInstance, alpha, beta, isMaximizing, qDepth) {
+            const standPat = evaluateBoard(chessInstance);
+            if (qDepth === 0 || chessInstance.game_over()) return standPat;
+
+            if (isMaximizing) {
+                if (standPat >= beta) return beta;
+                if (alpha < standPat) alpha = standPat;
+                const captures = chessInstance.moves({ verbose: true }).filter(m => m.captured || m.promotion);
+                captures.sort((a, b) => scoreMoveOrder(b) - scoreMoveOrder(a));
+                for (const m of captures) {
+                    chessInstance.move(m);
+                    const score = quiescenceSearch(chessInstance, alpha, beta, false, qDepth - 1);
+                    chessInstance.undo();
+                    if (score >= beta) return beta;
+                    if (score > alpha) alpha = score;
+                }
+                return alpha;
+            } else {
+                if (standPat <= alpha) return alpha;
+                if (beta > standPat) beta = standPat;
+                const captures = chessInstance.moves({ verbose: true }).filter(m => m.captured || m.promotion);
+                captures.sort((a, b) => scoreMoveOrder(b) - scoreMoveOrder(a));
+                for (const m of captures) {
+                    chessInstance.move(m);
+                    const score = quiescenceSearch(chessInstance, alpha, beta, true, qDepth - 1);
+                    chessInstance.undo();
+                    if (score <= alpha) return alpha;
+                    if (score < beta) beta = score;
+                }
+                return beta;
+            }
+        }
+
+        function minimax(chessInstance, depth, alpha, beta, isMaximizing, useQuiescence) {
+            if (chessInstance.game_over()) return evaluateBoard(chessInstance);
+            if (depth === 0) {
+                return useQuiescence
+                    ? quiescenceSearch(chessInstance, alpha, beta, isMaximizing, 3)
+                    : evaluateBoard(chessInstance);
+            }
+            const moves = chessInstance.moves({ verbose: true });
+            moves.sort((a, b) => scoreMoveOrder(b) - scoreMoveOrder(a));
+
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const m of moves) {
+                    chessInstance.move(m);
+                    const ev = minimax(chessInstance, depth - 1, alpha, beta, false, useQuiescence);
+                    chessInstance.undo();
+                    if (ev > maxEval) maxEval = ev;
+                    if (ev > alpha) alpha = ev;
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const m of moves) {
+                    chessInstance.move(m);
+                    const ev = minimax(chessInstance, depth - 1, alpha, beta, true, useQuiescence);
+                    chessInstance.undo();
+                    if (ev < minEval) minEval = ev;
+                    if (ev < beta) beta = ev;
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
         }
 
         function triggerAIMove() {
             if (isMatchOver() || isAnimating) return;
-            const moves = getPseudoLegalMoves();
-            if (moves.length === 0) return;
-            const kingCap = moves.find(m => m.captured === 'k');
-            const captures = moves.filter(m => m.captured);
-            const chosen = kingCap || (captures.length > 0 ? captures[Math.floor(Math.random() * captures.length)] : moves[Math.floor(Math.random() * moves.length)]);
-            const executed = executeChessMoveAllowingAny(chosen);
+            const allPseudoMoves = getPseudoLegalMoves();
+            if (allPseudoMoves.length === 0) return;
+
+            const kingCap = allPseudoMoves.find(m => m.captured === 'k');
+            let chosenMove = allPseudoMoves[0];
+
+            if (kingCap) {
+                chosenMove = kingCap;
+            } else {
+                const legalMoves = game.moves({ verbose: true });
+                if (legalMoves.length > 0) {
+                    if (aiDifficulty === 1) {
+                        // LEVEL 1 (Playful Kitten): 1-ply lookahead with high randomness so beginners can win
+                        let bestScore = -Infinity;
+                        for (const m of legalMoves) {
+                            game.move(m);
+                            const noisyScore = evaluateBoard(game) + (Math.random() * 260 - 130);
+                            game.undo();
+                            if (noisyScore > bestScore) {
+                                bestScore = noisyScore;
+                                chosenMove = m;
+                            }
+                        }
+                    } else if (aiDifficulty === 2) {
+                        // LEVEL 2 (Clever Lynx): Depth-2 Minimax with Piece-Square Tables + small variance
+                        let bestScore = -Infinity;
+                        legalMoves.sort((a, b) => scoreMoveOrder(b) - scoreMoveOrder(a));
+                        for (const m of legalMoves) {
+                            game.move(m);
+                            const score = minimax(game, 1, -Infinity, Infinity, false, false) + (Math.random() * 24 - 12);
+                            game.undo();
+                            if (score > bestScore) {
+                                bestScore = score;
+                                chosenMove = m;
+                            }
+                        }
+                    } else {
+                        // LEVEL 3 (Royal Master Lion): Depth-3 Alpha-Beta + Quiescence Capture Search (No blunders!)
+                        let bestScore = -Infinity;
+                        legalMoves.sort((a, b) => scoreMoveOrder(b) - scoreMoveOrder(a));
+                        for (const m of legalMoves) {
+                            game.move(m);
+                            const score = minimax(game, 2, -Infinity, Infinity, false, true);
+                            game.undo();
+                            if (score > bestScore) {
+                                bestScore = score;
+                                chosenMove = m;
+                            }
+                        }
+                    }
+                } else {
+                    const captures = allPseudoMoves.filter(m => m.captured);
+                    chosenMove = captures.length > 0 ? captures[0] : allPseudoMoves[0];
+                }
+            }
+
+            const executed = executeChessMoveAllowingAny(chosenMove);
             if (executed) animateChessMove(executed, () => { updateHUD(); checkEndConditions(); });
         }
 
@@ -1450,9 +1687,28 @@
             vsAI = !vsAI;
             const label = vsAI ? 'vs AI Cat Master' : '2P Pass & Play';
             document.getElementById('mode-label').textContent = label;
+            const modeIcon = document.getElementById('mode-icon');
+            if (modeIcon) modeIcon.textContent = vsAI ? 'smart_toy' : 'group';
+            const diffBtn = document.getElementById('btn-difficulty');
+            if (diffBtn) diffBtn.style.display = vsAI ? 'flex' : 'none';
+
             const mobLabel = document.getElementById('mode-label-mobile');
+            const mobIcon = document.getElementById('mode-icon-mobile');
+            const mobDiffBtn = document.getElementById('btn-difficulty-mobile');
             if (mobLabel) mobLabel.textContent = vsAI ? 'vs AI Master' : '2P Pass & Play';
+            if (mobIcon) mobIcon.textContent = vsAI ? 'smart_toy' : 'group';
+            if (mobDiffBtn) mobDiffBtn.style.display = vsAI ? 'flex' : 'none';
+
             sfx.playSelect();
+
+            if (!vsAI) {
+                syncPassAndPlayCamera();
+            } else {
+                camState.targetTheta = 0;
+                if (!isMatchOver() && game.turn() === 'b' && !isAnimating) {
+                    setTimeout(triggerAIMove, 260);
+                }
+            }
         }
         function cycleDifficulty() {
             aiDifficulty = (aiDifficulty % 3) + 1;
@@ -1464,11 +1720,24 @@
         }
         function cycleCameraAngle() { camState.targetTheta += Math.PI / 2; sfx.playSelect(); }
         function undoLastMove() {
-            if (stateUndoStack.length === 0) return;
-            const snap = stateUndoStack.pop();
-            game.load(snap.fen); customGameOver = snap.customGameOver; customMoveHistory = snap.history;
-            if (snap.castlingRights) castlingRights = { ...snap.castlingRights };
-            closeGameOverModal(); syncBoardPieces(); sfx.playSelect();
+            if (isAnimating || stateUndoStack.length === 0) return;
+            const steps = (vsAI && stateUndoStack.length >= 2) ? 2 : 1;
+            let snap = null;
+            for (let i = 0; i < steps; i++) snap = stateUndoStack.pop();
+            if (snap) {
+                game.load(snap.fen);
+                customGameOver = snap.customGameOver;
+                customMoveHistory = snap.history;
+                customEnPassantTarget = snap.customEnPassantTarget || null;
+                if (snap.castlingRights) castlingRights = { ...snap.castlingRights };
+            }
+            closeGameOverModal();
+            selectedSquare = null;
+            legalMovesForSelected = [];
+            while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
+            syncBoardPieces();
+            if (!vsAI) syncPassAndPlayCamera();
+            sfx.playSelect();
         }
         function toggleSound() {
             sfx.enabled = !sfx.enabled;
@@ -1477,7 +1746,21 @@
             const mobSound = document.getElementById('sound-icon-mobile');
             if (mobSound) mobSound.textContent = icon;
         }
-        function resetGame() { closeGameOverModal(); game.reset(); customGameOver = null; customMoveHistory = []; stateUndoStack = []; castlingRights = { wK: true, wQ: true, bK: true, bQ: true }; syncBoardPieces(); sfx.playSelect(); }
+        function resetGame() {
+            closeGameOverModal();
+            game.reset();
+            customGameOver = null;
+            customMoveHistory = [];
+            stateUndoStack = [];
+            customEnPassantTarget = null;
+            castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
+            selectedSquare = null;
+            legalMovesForSelected = [];
+            while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
+            syncBoardPieces();
+            camState.targetTheta = 0;
+            sfx.playSelect();
+        }
         function closeGameOverModal() { document.getElementById('gameover-modal').classList.add('hidden'); document.getElementById('gameover-modal').classList.remove('flex'); }
 
         function updateCameraTransform(immediate = false) {
