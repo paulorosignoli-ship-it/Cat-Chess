@@ -4,5 +4,5 @@
 
 ## 🚀 Deploying to GitHub & Vercel
 
-1. Unzip this folder and upload `index.html`, `package.json`, `vercel.json`, and `README.md` to a new GitHub repository.
-2. Go to [vercel.com/new](https://vercel.com/new), import your repository, and click **Deploy**.
+1. Unzip this folder and upload index.html, package.json, vercel.json, and README.md to your GitHub repository.
+2. Go to https://vercel.com/new, import your repository, and click **Deploy**.
