@@ -21,14 +21,12 @@
             --md-on-primary: #381e72;
             --md-outline: rgba(147, 143, 153, 0.35);
         }
-
         * {
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             box-sizing: border-box;
         }
-
         body, html {
             margin: 0;
             padding: 0;
@@ -41,11 +39,7 @@
             background-color: #0e0f14;
             color: #e6e1e5;
         }
-
-        .font-display {
-            font-family: 'Cinzel', serif;
-        }
-
+        .font-display { font-family: 'Cinzel', serif; }
         #canvas-container {
             position: fixed;
             inset: 0;
@@ -54,7 +48,6 @@
             z-index: 1;
             touch-action: none;
         }
-
         .m3-surface {
             background: var(--md-surface);
             backdrop-filter: blur(16px);
@@ -62,18 +55,15 @@
             border: 1px solid var(--md-outline);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
         }
-
         .m3-chip {
             background: rgba(35, 36, 46, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.12);
             transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
-
         .m3-chip:hover {
             background: rgba(65, 62, 82, 0.85);
             transform: translateY(-1px);
         }
-
         .m3-chip.active {
             background: var(--md-primary);
             color: var(--md-on-primary);
@@ -81,41 +71,25 @@
             font-weight: 600;
             box-shadow: 0 4px 14px rgba(208, 188, 255, 0.35);
         }
-
         .m3-btn {
             transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
             position: relative;
             overflow: hidden;
         }
-
-        .m3-btn:active {
-            transform: scale(0.95);
-        }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
+        .m3-btn:active { transform: scale(0.95); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes pulseGlow {
             0%, 100% { box-shadow: 0 0 12px rgba(248, 113, 113, 0.4); }
             50% { box-shadow: 0 0 24px rgba(248, 113, 113, 0.85); }
         }
-        .check-alert {
-            animation: pulseGlow 1.5s infinite;
-        }
+        .check-alert { animation: pulseGlow 1.5s infinite; }
     </style>
 </head>
 <body>
-
     <div id="canvas-container"></div>
 
     <div class="fixed inset-0 pointer-events-none z-10 flex flex-col justify-between p-2.5 sm:p-5" style="height: 100dvh;">
-
-        <!-- TOP BAR -->
         <header class="w-full flex flex-col lg:flex-row items-center justify-between gap-2 sm:gap-3 pointer-events-auto">
             <div class="m3-surface rounded-full px-3.5 py-2 flex items-center gap-2.5 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
                 <div class="flex items-center gap-2">
@@ -127,14 +101,11 @@
                         <p id="scene-subtitle" class="text-[10px] sm:text-[11px] text-purple-300/80 font-medium tracking-wide">Enchanted Moss Forest</p>
                     </div>
                 </div>
-
                 <div class="h-6 w-[1px] bg-white/15 hidden sm:block"></div>
-
                 <div id="turn-badge" class="flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 border border-white/15">
                     <span id="turn-dot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]"></span>
                     <span id="turn-text" class="text-[11px] sm:text-sm font-semibold tracking-wide text-stone-100 whitespace-nowrap">Marble Cats' Turn</span>
                 </div>
-
                 <div id="status-alert" class="hidden items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/25 border border-red-400/50 text-red-200 text-[11px] font-bold check-alert">
                     <span class="material-symbols-rounded text-xs">warning</span>
                     <span id="status-alert-text">CHECK!</span>
@@ -143,55 +114,44 @@
 
             <nav aria-label="Scenery Themes" class="m3-surface rounded-full p-1 sm:p-1.5 flex items-center gap-1 sm:gap-1.5 max-w-full overflow-x-auto no-scrollbar">
                 <button onclick="setSceneryTheme('forest')" data-theme="forest" class="theme-chip m3-chip active flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">forest</span>
-                    <span>Forest</span>
+                    <span class="material-symbols-rounded text-base">forest</span><span>Forest</span>
                 </button>
                 <button onclick="setSceneryTheme('cathouse')" data-theme="cathouse" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">cottage</span>
-                    <span>Cat House</span>
+                    <span class="material-symbols-rounded text-base">cottage</span><span>Cat House</span>
                 </button>
                 <button onclick="setSceneryTheme('meadows')" data-theme="meadows" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">local_florist</span>
-                    <span>Meadows</span>
+                    <span class="material-symbols-rounded text-base">local_florist</span><span>Meadows</span>
                 </button>
                 <button onclick="setSceneryTheme('alley')" data-theme="alley" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">location_city</span>
-                    <span>City Alley</span>
+                    <span class="material-symbols-rounded text-base">location_city</span><span>City Alley</span>
                 </button>
                 <button onclick="setSceneryTheme('paradise')" data-theme="paradise" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">cloud</span>
-                    <span>Cat Paradise</span>
+                    <span class="material-symbols-rounded text-base">cloud</span><span>Cat Paradise</span>
                 </button>
                 <button onclick="setSceneryTheme('starlight')" data-theme="starlight" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">nights_stay</span>
-                    <span>Starlight Roof</span>
+                    <span class="material-symbols-rounded text-base">nights_stay</span><span>Starlight Roof</span>
                 </button>
                 <button onclick="setSceneryTheme('temple')" data-theme="temple" class="theme-chip m3-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap">
-                    <span class="material-symbols-rounded text-base">account_balance</span>
-                    <span>Ancient Temple</span>
+                    <span class="material-symbols-rounded text-base">account_balance</span><span>Ancient Temple</span>
                 </button>
             </nav>
         </header>
 
-        <!-- MIDDLE FLOATING TRAYS -->
         <div class="flex justify-between items-end sm:items-center my-auto pointer-events-none gap-2">
             <div id="captures-window" class="m3-surface rounded-2xl p-2 sm:p-2.5 flex flex-col gap-1.5 pointer-events-auto max-w-[155px] sm:max-w-[220px] transition-all duration-300">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-[10px] sm:text-[11px] uppercase tracking-wider text-purple-300 font-bold flex items-center gap-1">
-                        <span class="material-symbols-rounded text-sm">swords</span>
-                        <span>Captures</span>
+                        <span class="material-symbols-rounded text-sm">swords</span><span>Captures</span>
                     </span>
-                    <button onclick="toggleTray('captures')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300" title="Minimize / Expand Captures">
+                    <button onclick="toggleTray('captures')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300">
                         <span id="captures-toggle-icon" class="material-symbols-rounded text-sm">remove</span>
                     </button>
                 </div>
-
                 <div id="captures-body" class="flex flex-col gap-1.5">
                     <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-stone-300 font-semibold border-b border-white/10 pb-1">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-stone-100"></span>Marble</span>
                     </div>
                     <div id="captured-by-white" class="flex flex-wrap gap-1 min-h-[20px] text-xs sm:text-sm leading-none"></div>
-
                     <div class="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] text-stone-400 font-semibold border-b border-white/10 pb-1 pt-0.5">
                         <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-950 border border-purple-400"></span>Obsidian</span>
                     </div>
@@ -202,11 +162,10 @@
             <div id="chronicle-window" class="m3-surface rounded-2xl p-2 sm:p-3 flex flex-col gap-1.5 pointer-events-auto w-36 sm:w-52 transition-all duration-300">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-1 text-[10px] sm:text-[11px] uppercase tracking-wider text-purple-300 font-bold">
-                        <span class="material-symbols-rounded text-sm">history_edu</span>
-                        <span>Chronicle</span>
+                        <span class="material-symbols-rounded text-sm">history_edu</span><span>Chronicle</span>
                         <span id="move-counter" class="text-[10px] text-stone-400 font-normal">(1)</span>
                     </div>
-                    <button onclick="toggleTray('chronicle')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300" title="Minimize / Expand Chronicle">
+                    <button onclick="toggleTray('chronicle')" class="m3-btn w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300">
                         <span id="chronicle-toggle-icon" class="material-symbols-rounded text-sm">remove</span>
                     </button>
                 </div>
@@ -218,35 +177,28 @@
             </div>
         </div>
 
-        <!-- BOTTOM DOCK -->
         <footer class="w-full flex flex-col sm:flex-row items-center justify-center gap-2 pointer-events-auto pb-1 sm:pb-0">
             <div class="m3-surface rounded-full p-1.5 px-2.5 sm:px-3 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
                 <button id="btn-mode" onclick="toggleGameMode()" class="m3-btn flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-purple-300 text-purple-950 font-semibold text-xs sm:text-sm shadow-sm">
                     <span id="mode-icon" class="material-symbols-rounded text-base sm:text-lg">smart_toy</span>
                     <span id="mode-label">vs AI Cat Master</span>
                 </button>
-
                 <button id="btn-difficulty" onclick="cycleDifficulty()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
                     <span class="material-symbols-rounded text-base text-amber-300">psychology</span>
                     <span id="diff-label">AI: Clever</span>
                 </button>
-
                 <div class="h-5 w-[1px] bg-white/15 mx-0.5 hidden sm:block"></div>
-
-                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium" title="Switch Camera View">
+                <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
                     <span class="material-symbols-rounded text-base sm:text-lg">videocam</span>
                     <span id="cam-label" class="hidden sm:inline">Orbit View</span>
                 </button>
-
-                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium" title="Undo Move">
+                <button onclick="undoLastMove()" class="m3-btn flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium">
                     <span class="material-symbols-rounded text-base sm:text-lg">undo</span>
                     <span class="hidden sm:inline">Undo</span>
                 </button>
-
-                <button id="btn-sound" onclick="toggleSound()" class="m3-btn flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200" title="Toggle Sound">
+                <button id="btn-sound" onclick="toggleSound()" class="m3-btn flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 text-stone-200">
                     <span id="sound-icon" class="material-symbols-rounded text-base sm:text-lg">volume_up</span>
                 </button>
-
                 <button onclick="resetGame()" class="m3-btn flex items-center gap-1 px-3.5 py-2 rounded-full bg-rose-500/25 hover:bg-rose-500/35 border border-rose-400/30 text-rose-200 text-xs sm:text-sm font-semibold">
                     <span class="material-symbols-rounded text-base sm:text-lg">restart_alt</span>
                     <span>New Match</span>
@@ -255,7 +207,6 @@
         </footer>
     </div>
 
-    <!-- PAWN PROMOTION MODAL -->
     <div id="promotion-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-black/65 backdrop-blur-md p-4">
         <div class="m3-surface rounded-3xl p-6 max-w-md w-full text-center border border-purple-400/30 shadow-2xl">
             <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center mx-auto mb-3">
@@ -265,26 +216,21 @@
             <p class="text-xs text-stone-300 mb-5">Your brave Kitten Pawn reached the final rank! Choose its royal evolution:</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <button onclick="confirmPromotion('q')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
-                    <span class="text-2xl">👑</span>
-                    <span class="text-xs font-bold text-white">Empress Queen</span>
+                    <span class="text-2xl">👑</span><span class="text-xs font-bold text-white">Empress Queen</span>
                 </button>
                 <button onclick="confirmPromotion('r')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
-                    <span class="text-2xl">🏰</span>
-                    <span class="text-xs font-bold text-white">Tower Guardian</span>
+                    <span class="text-2xl">🏰</span><span class="text-xs font-bold text-white">Tower Guardian</span>
                 </button>
                 <button onclick="confirmPromotion('b')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
-                    <span class="text-2xl">🔮</span>
-                    <span class="text-xs font-bold text-white">Mystic Mage</span>
+                    <span class="text-2xl">🔮</span><span class="text-xs font-bold text-white">Mystic Mage</span>
                 </button>
                 <button onclick="confirmPromotion('n')" class="m3-btn p-3 rounded-2xl bg-white/10 hover:bg-purple-500/30 border border-white/15 flex flex-col items-center gap-1">
-                    <span class="text-2xl">⚡</span>
-                    <span class="text-xs font-bold text-white">Lynx Pouncer</span>
+                    <span class="text-2xl">⚡</span><span class="text-xs font-bold text-white">Lynx Pouncer</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- VICTORY MODAL -->
     <div id="gameover-modal" class="fixed inset-0 z-30 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4 pointer-events-auto">
         <div class="m3-surface rounded-3xl p-7 max-w-md w-full text-center border border-purple-300/30 shadow-2xl">
             <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-purple-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -293,17 +239,14 @@
             <h2 id="gameover-title" class="font-display text-2xl font-extrabold text-white mb-2">Checkmate!</h2>
             <p id="gameover-desc" class="text-sm text-stone-300 mb-6">The Marble Dynasty claims the throne.</p>
             <div class="flex items-center justify-center gap-3">
-                <button onclick="closeGameOverModal()" class="m3-btn px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-stone-200">
-                    Inspect Board
-                </button>
-                <button onclick="resetGame()" class="m3-btn px-6 py-2.5 rounded-full bg-purple-300 hover:bg-purple-200 text-purple-950 text-xs font-bold shadow-lg">
-                    Play Again
-                </button>
+                <button onclick="closeGameOverModal()" class="m3-btn px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-stone-200">Inspect Board</button>
+                <button onclick="resetGame()" class="m3-btn px-6 py-2.5 rounded-full bg-purple-300 hover:bg-purple-200 text-purple-950 text-xs font-bold shadow-lg">Play Again</button>
             </div>
         </div>
     </div>
 
     <script>
+
         class CatSoundEngine {
             constructor() {
                 this.enabled = true;
@@ -1384,7 +1327,6 @@
                 camState.targetRadius = Math.max(12, Math.min(36, camState.targetRadius + e.deltaY * 0.015));
             }, { passive: false });
 
-            // Mobile Touch Orbit + 2-Finger Pinch-to-Zoom
             dom.addEventListener('touchstart', e => {
                 if (e.touches.length === 1) {
                     camState.isDragging = true;
@@ -1518,6 +1460,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => { init3D(); animate(); });
+    
     </script>
 </body>
 </html>
