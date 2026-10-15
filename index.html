@@ -1426,6 +1426,26 @@
         }
 
         function checkEndConditions() {
+            if (!isMatchOver()) return;
+            const modal = document.getElementById('gameover-modal');
+            const title = document.getElementById('gameover-title');
+            const desc = document.getElementById('gameover-desc');
+            if (customGameOver && customGameOver.reason === 'king_captured') {
+                const winner = customGameOver.winner === 'w' ? 'Marble Cats' : 'Obsidian Cats';
+                title.textContent = 'Monarch Shattered!';
+                desc.textContent = 'The enemy King was left exposed and captured! The ' + winner + ' claim total victory!';
+            } else if (game.in_checkmate()) {
+                const winner = game.turn() === 'w' ? 'Obsidian Cats' : 'Marble Cats';
+                title.textContent = 'Royal Checkmate!';
+                desc.textContent = 'The ' + winner + ' have conquered the Sanctuary Board!';
+            } else {
+                title.textContent = 'Sanctuary Draw';
+                desc.textContent = 'The match ends in a peaceful draw.';
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
         function toggleGameMode() {
             vsAI = !vsAI;
             const label = vsAI ? 'vs AI Cat Master' : '2P Pass & Play';
