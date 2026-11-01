@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
     <style>
         :root {
@@ -119,6 +120,10 @@
                         <span id="selected-piece-icon" class="text-xs leading-none">👑</span>
                         <span id="selected-piece-name" class="whitespace-nowrap">Queen</span>
                     </div>
+                    <button id="online-status-pill" onclick="openOnlineModal()" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 text-[10px] sm:text-xs font-bold">
+                        <span id="online-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="online-status-text">SALA: ----</span>
+                    </button>
                     <!-- SANDWICH MENU BUTTON (Visible on Mobile/Tablet < 1024px) -->
                     <button onclick="toggleMobileMenu()" class="lg:hidden m3-btn w-9 h-9 rounded-full bg-purple-400/20 hover:bg-purple-400/30 border border-purple-300/30 flex items-center justify-center text-purple-100 shadow-md" aria-label="Open Menu">
                         <span class="material-symbols-rounded text-xl">menu</span>
@@ -216,6 +221,10 @@
                 <button onclick="cycleCameraAngle()" class="m3-btn flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/10 text-stone-200 text-xs font-medium shrink-0" title="Camera View">
                     <span class="material-symbols-rounded text-base">videocam</span>
                 </button>
+                <button onclick="openOnlineModal()" class="m3-btn flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 text-xs font-bold shrink-0" title="Online 2P">
+                    <span class="material-symbols-rounded text-base">wifi_tethering</span>
+                    <span>Online</span>
+                </button>
                 <button onclick="toggleMobileMenu()" class="m3-btn flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-300 text-purple-950 text-xs font-bold shrink-0">
                     <span class="material-symbols-rounded text-base">tune</span>
                     <span>Menu</span>
@@ -227,6 +236,10 @@
                 <button id="btn-mode" onclick="toggleGameMode()" class="m3-btn flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-300 text-purple-950 font-semibold text-sm shadow-sm">
                     <span id="mode-icon" class="material-symbols-rounded text-lg">smart_toy</span>
                     <span id="mode-label">vs AI Cat Master</span>
+                </button>
+                <button id="btn-online" onclick="openOnlineModal()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/40 text-emerald-200 text-sm font-bold shadow-sm">
+                    <span class="material-symbols-rounded text-lg">wifi_tethering</span>
+                    <span id="online-btn-label">Online 2P</span>
                 </button>
                 <button id="btn-difficulty" onclick="cycleDifficulty()" class="m3-btn flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-stone-200 text-sm font-medium">
                     <span class="material-symbols-rounded text-base text-amber-300">psychology</span>
@@ -286,6 +299,10 @@
             <!-- 1. Match Controls -->
             <div class="space-y-2">
                 <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">Match Settings</div>
+                <button onclick="toggleMobileMenu(); openOnlineModal();" class="w-full m3-btn p-2.5 rounded-2xl bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+                    <span class="material-symbols-rounded text-base">wifi_tethering</span>
+                    <span>Multiplayer Online (Código de Sala)</span>
+                </button>
                 <div class="grid grid-cols-2 gap-2">
                     <button onclick="toggleGameMode()" class="m3-btn p-2.5 rounded-2xl bg-purple-300 text-purple-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow">
                         <span id="mode-icon-mobile" class="material-symbols-rounded text-base">smart_toy</span>
@@ -410,6 +427,92 @@
                 <button onclick="closeGameOverModal()" class="m3-btn px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-stone-200">Inspect Board</button>
                 <button onclick="resetGame()" class="m3-btn px-6 py-2.5 rounded-full bg-purple-300 hover:bg-purple-200 text-purple-950 text-xs font-bold shadow-lg">Play Again</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ONLINE 2P ROOM MODAL -->
+    <div id="online-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/70 backdrop-blur-md p-4 pointer-events-auto">
+        <div class="m3-surface rounded-3xl p-6 max-w-md w-full border border-purple-300/30 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300">
+                        <span class="material-symbols-rounded text-xl">wifi_tethering</span>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-base font-bold text-white leading-tight">MULTIPLAYER ONLINE</h2>
+                        <p class="text-[11px] text-stone-400">Jogue em 2 aparelhos sem login via código</p>
+                    </div>
+                </div>
+                <button onclick="closeOnlineModal()" class="m3-btn w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300">
+                    <span class="material-symbols-rounded text-lg">close</span>
+                </button>
+            </div>
+
+            <div id="online-setup-view" class="space-y-4">
+                <div class="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-200 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-stone-100"></span>
+                            1. Criar Nova Partida (Mármore)
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 font-semibold">Anfitrião</span>
+                    </div>
+                    <p class="text-[11px] text-stone-300 leading-relaxed">
+                        Gere um código de 5 letras para enviar ao seu parceiro e jogue com os Gatos de Mármore.
+                    </p>
+                    <button id="btn-create-room" onclick="createOnlineRoom()" class="w-full m3-btn py-2.5 px-4 rounded-xl bg-purple-300 hover:bg-purple-200 text-purple-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg">
+                        <span class="material-symbols-rounded text-base">add_link</span>
+                        <span>Criar Sala & Gerar Código</span>
+                    </button>
+                </div>
+
+                <div class="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-200 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                            2. Entrar com Código (Obsidiana)
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200 font-semibold">Convidado</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="join-room-input" type="text" maxlength="6" placeholder="Ex: GATO7" class="w-full px-3.5 py-2 rounded-xl bg-black/50 border border-white/20 text-white font-mono text-sm uppercase tracking-widest text-center focus:outline-none focus:border-purple-400" />
+                        <button id="btn-join-room" onclick="joinOnlineRoom()" class="m3-btn px-5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold text-xs shrink-0 shadow-lg">
+                            Conectar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="online-active-view" class="hidden space-y-4 text-center">
+                <div class="rounded-2xl bg-black/40 border border-emerald-400/30 p-4 space-y-2">
+                    <div class="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">Código da Sua Sala</div>
+                    <div id="online-room-code-display" class="font-mono text-3xl font-extrabold tracking-[0.25em] text-white py-1 select-all">-----</div>
+                    <p id="online-connection-msg" class="text-xs text-amber-200 font-medium">Aguardando seu parceiro digitar o código...</p>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        <button onclick="copyRoomCode()" class="m3-btn py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-stone-100 text-xs font-semibold flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-rounded text-base text-purple-300">content_copy</span>
+                            <span id="copy-code-label">Copiar Código</span>
+                        </button>
+                        <button onclick="copyInviteLink()" class="m3-btn py-2 px-3 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/30 text-emerald-200 text-xs font-semibold flex items-center justify-center gap-1.5">
+                            <span class="material-symbols-rounded text-base">share</span>
+                            <span id="copy-link-label">Copiar Link</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-1">
+                    <button onclick="disconnectOnlineRoom()" class="m3-btn px-4 py-2 rounded-full bg-rose-500/25 border border-rose-400/30 text-rose-200 text-xs font-semibold flex items-center gap-1">
+                        <span class="material-symbols-rounded text-sm">link_off</span>
+                        <span>Sair da Sala</span>
+                    </button>
+                    <button onclick="closeOnlineModal()" class="m3-btn px-5 py-2 rounded-full bg-purple-300 text-purple-950 text-xs font-bold">
+                        Voltar ao Tabuleiro
+                    </button>
+                </div>
+            </div>
+
+            <p id="online-error-msg" class="text-xs text-rose-300 text-center hidden font-medium"></p>
         </div>
     </div>
 
@@ -678,6 +781,15 @@
         let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
         let vsAI = true, aiDifficulty = 2, currentTheme = 'forest';
         let showPieceBadges = true;
+
+        const onlineState = {
+            active: false,
+            peer: null,
+            conn: null,
+            roomCode: null,
+            myColor: 'w',
+            isConnected: false
+        };
 
         const pieceMeshes = {}, activeAnimations = [], shatterParticles = [], envAnimatedProps = [];
         function computeOptimalBoardRadius() {
@@ -1159,10 +1271,7 @@
             alley: { title: 'Neon Cyberpunk Cat Alley', bg: 0x090a14, fogColor: 0x090a14, fogDensity: 0.018, lightSq: 0xcbd5e1, darkSq: 0x1e1b4b, frame: 0x0f172a, ambient: 0xc084fc, dirColor: 0xe0e7ff, rim1: 0xf43f5e, rim2: 0x06b6d4 },
             paradise: { title: 'Celestial Cloud Cat Paradise', bg: 0x1e1633, fogColor: 0x1e1633, fogDensity: 0.012, lightSq: 0xfdf2f8, darkSq: 0x701a75, frame: 0x4a044e, ambient: 0xfbcfe8, dirColor: 0xfff1f2, rim1: 0xf472b6, rim2: 0xa855f7 },
             starlight: { title: 'Midnight Starlight Rooftop', bg: 0x060814, fogColor: 0x060814, fogDensity: 0.014, lightSq: 0xe2e8f0, darkSq: 0x1e293b, frame: 0x0f172a, ambient: 0x93c5fd, dirColor: 0xe0f2fe, rim1: 0x818cf8, rim2: 0x38bdf8 },
-            temple: { title: 'Ancient Bastet Sun Temple', bg: 0x24190e, fogColor: 0x24190e, fogDensity: 0.015, lightSq: 0xfef3c7, darkSq: 0x78350f, frame: 0x451a03, ambient: 0xfde68a, dirColor: 0xfef08a, rim1: 0xf59e0b, rim2: 0xef4444 }
-        };
-
-        function setSceneryTheme(themeKey) {
+        function setSceneryTheme(themeKey, fromNetwork = false) {
             if (!themeConfigs[themeKey]) return;
             currentTheme = themeKey;
             const cfg = themeConfigs[themeKey];
@@ -1174,6 +1283,9 @@
             ambientLight.color.setHex(cfg.ambient); mainDirLight.color.setHex(cfg.dirColor); rimLight1.color.setHex(cfg.rim1); rimLight2.color.setHex(cfg.rim2);
             buildEnvironment(themeKey);
             sfx.playSelect();
+            if (!fromNetwork && onlineState.active && onlineState.isConnected && onlineState.conn) {
+                onlineState.conn.send({ type: 'theme', themeKey });
+            }
         }
 
         function addFloatingParticles(count, hexColor, spreadRadius) {
@@ -1403,7 +1515,13 @@
         }
 
         function handleSquareTap(sq) {
-            if (isAnimating || isMatchOver() || (vsAI && game.turn() === 'b')) return;
+            if (isAnimating || isMatchOver()) return;
+            if (onlineState.active) {
+                if (!onlineState.isConnected) { openOnlineModal(); return; }
+                if (game.turn() !== onlineState.myColor) return;
+            } else if (vsAI && game.turn() === 'b') {
+                return;
+            }
             const matchingMoves = legalMovesForSelected.filter(m => m.to === sq);
             if (selectedSquare && matchingMoves.length > 0) {
                 const isPromotion = matchingMoves.some(m => (m.flags && m.flags.includes('p')) || m.promotion);
@@ -1458,6 +1576,10 @@
         }
 
         function syncPassAndPlayCamera() {
+            if (onlineState.active) {
+                camState.targetTheta = onlineState.myColor === 'w' ? 0 : Math.PI;
+                return;
+            }
             if (!vsAI && !isMatchOver()) {
                 camState.targetTheta = game.turn() === 'w' ? 0 : Math.PI;
                 const isMobile = window.innerWidth < 640;
@@ -1470,22 +1592,204 @@
             }
         }
 
-        function executePlayerMove(moveInput) {
+        function executePlayerMove(moveInput, fromNetwork = false) {
             const moveResult = executeChessMoveAllowingAny(moveInput);
             if (!moveResult) return;
             selectedSquare = null; legalMovesForSelected = [];
             updateSelectedPieceBanner(null, null);
+            if (!fromNetwork && onlineState.active && onlineState.isConnected && onlineState.conn) {
+                onlineState.conn.send({ type: 'move', moveInput });
+            }
             animateChessMove(moveResult, () => {
                 updateHUD();
                 checkEndConditions();
                 if (!isMatchOver()) {
-                    if (vsAI && game.turn() === 'b') {
+                    if (onlineState.active) {
+                        camState.targetTheta = onlineState.myColor === 'w' ? 0 : Math.PI;
+                    } else if (vsAI && game.turn() === 'b') {
                         setTimeout(triggerAIMove, 260);
                     } else if (!vsAI) {
                         setTimeout(syncPassAndPlayCamera, 180);
                     }
                 }
             });
+        }
+
+        const PEER_PREFIX = 'felis-regia-catchess-';
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        }
+        function openOnlineModal() {
+            const modal = document.getElementById('online-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            updateOnlineModalUI(); sfx.playSelect();
+        }
+        function closeOnlineModal() {
+            const modal = document.getElementById('online-modal');
+            if (!modal) return;
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+        function showOnlineError(msg) {
+            const errEl = document.getElementById('online-error-msg');
+            if (!errEl) return;
+            if (!msg) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+            else { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+        }
+        function updateOnlineModalUI() {
+            const setupView = document.getElementById('online-setup-view');
+            const activeView = document.getElementById('online-active-view');
+            const codeDisplay = document.getElementById('online-room-code-display');
+            const connMsg = document.getElementById('online-connection-msg');
+            const topPill = document.getElementById('online-status-pill');
+            const topPillText = document.getElementById('online-status-text');
+            const topPillDot = document.getElementById('online-status-dot');
+            if (onlineState.active) {
+                setupView.classList.add('hidden'); activeView.classList.remove('hidden');
+                codeDisplay.textContent = onlineState.roomCode || '-----';
+                topPill.classList.remove('hidden'); topPill.classList.add('flex');
+                if (onlineState.isConnected) {
+                    const roleName = onlineState.myColor === 'w' ? 'Mármore (Brancas)' : 'Obsidiana (Pretas)';
+                    connMsg.textContent = 'Conectado! Você joga com: ' + roleName;
+                    connMsg.className = 'text-xs text-emerald-300 font-bold';
+                    topPillText.textContent = 'ONLINE: ' + onlineState.roomCode;
+                    topPillDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                } else {
+                    connMsg.textContent = 'Aguardando seu parceiro entrar com o código...';
+                    connMsg.className = 'text-xs text-amber-200 font-medium animate-pulse';
+                    topPillText.textContent = 'SALA: ' + onlineState.roomCode;
+                    topPillDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                }
+            } else {
+                setupView.classList.remove('hidden'); activeView.classList.add('hidden');
+                topPill.classList.add('hidden'); topPill.classList.remove('flex');
+            }
+        }
+        function createOnlineRoom() {
+            showOnlineError('');
+            if (typeof Peer === 'undefined') { showOnlineError('PeerJS carregando. Tente em 2s.'); return; }
+            disconnectOnlineRoom(true);
+            const code = generateRoomCode();
+            onlineState.roomCode = code; onlineState.myColor = 'w'; onlineState.active = true; onlineState.isConnected = false;
+            vsAI = false; updateOnlineModalUI();
+            const peer = new Peer(PEER_PREFIX + code);
+            onlineState.peer = peer;
+            peer.on('open', () => updateOnlineModalUI());
+            peer.on('connection', (conn) => {
+                if (onlineState.conn && onlineState.isConnected) { conn.close(); return; }
+                onlineState.conn = conn; setupPeerConnectionHandlers(conn);
+            });
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') createOnlineRoom();
+                else showOnlineError('Erro: ' + (err.message || err.type));
+            });
+        }
+        function joinOnlineRoom(forcedCode = null) {
+            showOnlineError('');
+            if (typeof Peer === 'undefined') { showOnlineError('PeerJS carregando. Tente em 2s.'); return; }
+            const inputEl = document.getElementById('join-room-input');
+            const rawCode = (forcedCode || (inputEl ? inputEl.value : '')).trim().toUpperCase();
+            if (!rawCode || rawCode.length < 4) { showOnlineError('Digite um código válido (ex: GATO7).'); return; }
+            disconnectOnlineRoom(true);
+            onlineState.roomCode = rawCode; onlineState.myColor = 'b'; onlineState.active = true; onlineState.isConnected = false;
+            vsAI = false; updateOnlineModalUI();
+            const connMsg = document.getElementById('online-connection-msg');
+            if (connMsg) connMsg.textContent = 'Conectando à sala ' + rawCode + '...';
+            const peer = new Peer();
+            onlineState.peer = peer;
+            peer.on('open', () => {
+                const conn = peer.connect(PEER_PREFIX + rawCode, { reliable: true });
+                onlineState.conn = conn; setupPeerConnectionHandlers(conn);
+            });
+            peer.on('error', () => {
+                showOnlineError('Sala ' + rawCode + ' não encontrada.');
+                disconnectOnlineRoom(true); updateOnlineModalUI();
+            });
+        }
+        function setupPeerConnectionHandlers(conn) {
+            conn.on('open', () => {
+                onlineState.isConnected = true; vsAI = false;
+                document.getElementById('mode-icon').textContent = 'wifi_tethering';
+                document.getElementById('mode-label').textContent = onlineState.myColor === 'w' ? 'Online (Mármore)' : 'Online (Obsidiana)';
+                document.getElementById('btn-difficulty').style.display = 'none';
+                const mobLabel = document.getElementById('mode-label-mobile');
+                if (mobLabel) mobLabel.textContent = onlineState.myColor === 'w' ? 'Online (Mármore)' : 'Online (Obsidiana)';
+                camState.targetTheta = onlineState.myColor === 'w' ? 0 : Math.PI;
+                fitBoardToScreen();
+                if (onlineState.myColor === 'w') {
+                    resetGame(true);
+                    conn.send({ type: 'init_sync', themeKey: currentTheme });
+                }
+                updateOnlineModalUI(); updateHUD(); sfx.playVictory();
+            });
+            conn.on('data', (data) => {
+                if (!data || !data.type) return;
+                if (data.type === 'init_sync') {
+                    resetGame(true);
+                    if (data.themeKey) setSceneryTheme(data.themeKey, true);
+                    camState.targetTheta = onlineState.myColor === 'w' ? 0 : Math.PI;
+                } else if (data.type === 'move' && data.moveInput) {
+                    executePlayerMove(data.moveInput, true);
+                } else if (data.type === 'reset') {
+                    resetGame(true);
+                } else if (data.type === 'undo') {
+                    undoLastMove(true);
+                } else if (data.type === 'theme' && data.themeKey) {
+                    setSceneryTheme(data.themeKey, true);
+                }
+            });
+            conn.on('close', () => {
+                onlineState.isConnected = false;
+                showOnlineError('Seu parceiro desconectou.');
+                updateOnlineModalUI(); updateHUD();
+            });
+        }
+        function disconnectOnlineRoom(silent = false) {
+            if (onlineState.conn) { try { onlineState.conn.close(); } catch (e) {} }
+            if (onlineState.peer) { try { onlineState.peer.destroy(); } catch (e) {} }
+            onlineState.active = false; onlineState.isConnected = false; onlineState.conn = null; onlineState.peer = null; onlineState.roomCode = null;
+            if (!silent) {
+                document.getElementById('mode-icon').textContent = vsAI ? 'smart_toy' : 'group';
+                document.getElementById('mode-label').textContent = vsAI ? 'vs AI Cat Master' : '2P Pass & Play';
+                document.getElementById('btn-difficulty').style.display = vsAI ? 'flex' : 'none';
+                updateOnlineModalUI(); updateHUD(); sfx.playSelect();
+            }
+        }
+        function copyRoomCode() {
+            if (!onlineState.roomCode) return;
+            const temp = document.createElement('textarea');
+            temp.value = onlineState.roomCode;
+            document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp);
+            const lbl = document.getElementById('copy-code-label');
+            if (lbl) { lbl.textContent = 'Copiado!'; setTimeout(() => { lbl.textContent = 'Copiar Código'; }, 2000); }
+            sfx.playSelect();
+        }
+        function copyInviteLink() {
+            if (!onlineState.roomCode) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('room', onlineState.roomCode);
+            const temp = document.createElement('textarea');
+            temp.value = url.toString();
+            document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp);
+            const lbl = document.getElementById('copy-link-label');
+            if (lbl) { lbl.textContent = 'Link Copiado!'; setTimeout(() => { lbl.textContent = 'Copiar Link'; }, 2000); }
+            sfx.playSelect();
+        }
+        function checkUrlForRoomInvite() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const roomParam = params.get('room');
+                if (roomParam && roomParam.trim().length >= 4) {
+                    const cleanCode = roomParam.trim().toUpperCase();
+                    const inputEl = document.getElementById('join-room-input');
+                    if (inputEl) inputEl.value = cleanCode;
+                    openOnlineModal();
+                    setTimeout(() => joinOnlineRoom(cleanCode), 450);
+                }
+            } catch (e) {}
         }
 
         const pieceValues = { p: 100, n: 320, b: 335, r: 500, q: 920, k: 20000 };
@@ -1739,9 +2043,24 @@
         function updateHUD() {
             const turn = game.turn();
             const isMobile = window.innerWidth < 640;
-            document.getElementById('turn-text').textContent = turn === 'w'
-                ? (isMobile ? "Marble's Turn" : "Marble Cats' Turn")
-                : (vsAI ? 'AI Thinking...' : (isMobile ? "Obsidian's Turn" : "Obsidian Cats' Turn"));
+            const turnDot = document.getElementById('turn-dot');
+            const turnText = document.getElementById('turn-text');
+            if (onlineState.active && onlineState.isConnected) {
+                const isMyTurn = turn === onlineState.myColor;
+                turnDot.className = turn === 'w'
+                    ? 'w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]'
+                    : 'w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc]';
+                turnText.textContent = isMyTurn ? (isMobile ? 'Sua Vez!' : 'Sua Vez de Jogar!') : (isMobile ? 'Vez do Parceiro...' : 'Aguardando Parceiro...');
+                turnText.className = isMyTurn ? 'text-[11px] sm:text-sm font-bold tracking-wide text-emerald-300' : 'text-[11px] sm:text-sm font-semibold tracking-wide text-stone-300';
+            } else {
+                turnDot.className = turn === 'w'
+                    ? 'w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-stone-100 shadow-[0_0_8px_#fff]'
+                    : 'w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc]';
+                turnText.textContent = turn === 'w'
+                    ? (isMobile ? "Marble's Turn" : "Marble Cats' Turn")
+                    : (vsAI ? 'AI Thinking...' : (isMobile ? "Obsidian's Turn" : "Obsidian Cats' Turn"));
+                turnText.className = 'text-[11px] sm:text-sm font-semibold tracking-wide text-stone-100';
+            }
             const statusAlert = document.getElementById('status-alert');
             const statusAlertText = document.getElementById('status-alert-text');
             if (customGameOver || game.in_checkmate()) {
@@ -1822,6 +2141,7 @@
         }
 
         function toggleGameMode() {
+            if (onlineState.active) disconnectOnlineRoom(true);
             vsAI = !vsAI;
             const label = vsAI ? 'vs AI Cat Master' : '2P Pass & Play';
             document.getElementById('mode-label').textContent = label;
@@ -1885,7 +2205,7 @@
             const isPortrait = window.innerWidth < window.innerHeight;
             camState.targetRadius = optR;
             camState.targetPhi = isPortrait ? 0.86 : 0.92;
-            camState.targetTheta = (!vsAI && game.turn() === 'b') ? Math.PI : 0;
+            camState.targetTheta = onlineState.active ? (onlineState.myColor === 'w' ? 0 : Math.PI) : ((!vsAI && game.turn() === 'b') ? Math.PI : 0);
             sfx.playSelect();
         }
         function togglePieceBadges() {
@@ -1907,9 +2227,10 @@
             }
             sfx.playSelect();
         }
-        function undoLastMove() {
+
+        function undoLastMove(fromNetwork = false) {
             if (isAnimating || stateUndoStack.length === 0) return;
-            const steps = (vsAI && stateUndoStack.length >= 2) ? 2 : 1;
+            const steps = (vsAI && !onlineState.active && stateUndoStack.length >= 2) ? 2 : 1;
             let snap = null;
             for (let i = 0; i < steps; i++) snap = stateUndoStack.pop();
             if (snap) {
@@ -1926,15 +2247,21 @@
             syncBoardPieces();
             if (!vsAI) syncPassAndPlayCamera();
             sfx.playSelect();
+            if (!fromNetwork && onlineState.active && onlineState.isConnected && onlineState.conn) {
+                onlineState.conn.send({ type: 'undo' });
+            }
         }
+
         function toggleSound() {
             sfx.enabled = !sfx.enabled;
             const icon = sfx.enabled ? 'volume_up' : 'volume_off';
             document.getElementById('sound-icon').textContent = icon;
-            const mobSound = document.getElementById('sound-icon-mobile');
-            if (mobSound) mobSound.textContent = icon;
+            const mobIcon = document.getElementById('sound-icon-mobile');
+            if (mobIcon) mobIcon.textContent = icon;
+            sfx.playSelect();
         }
-        function resetGame() {
+
+        function resetGame(fromNetwork = false) {
             closeGameOverModal();
             game.reset();
             customGameOver = null;
@@ -1946,8 +2273,11 @@
             legalMovesForSelected = [];
             while (highlightsGroup.children.length > 0) highlightsGroup.remove(highlightsGroup.children[0]);
             syncBoardPieces();
-            camState.targetTheta = 0;
+            camState.targetTheta = (onlineState.active && onlineState.myColor === 'b') ? Math.PI : 0;
             sfx.playSelect();
+            if (!fromNetwork && onlineState.active && onlineState.isConnected && onlineState.conn) {
+                onlineState.conn.send({ type: 'reset' });
+            }
         }
         function closeGameOverModal() { document.getElementById('gameover-modal').classList.add('hidden'); document.getElementById('gameover-modal').classList.remove('flex'); }
 
@@ -2118,7 +2448,7 @@
             renderer.render(scene, camera);
         }
 
-        window.addEventListener('DOMContentLoaded', () => { init3D(); animate(); });
+        window.addEventListener('DOMContentLoaded', () => { init3D(); animate(); checkUrlForRoomInvite(); });
     
     </script>
 </body>
